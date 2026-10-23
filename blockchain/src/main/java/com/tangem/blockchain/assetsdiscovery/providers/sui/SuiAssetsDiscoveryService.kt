@@ -3,14 +3,14 @@ package com.tangem.blockchain.assetsdiscovery.providers.sui
 import com.tangem.blockchain.assetsdiscovery.AssetsDiscoveryService
 import com.tangem.blockchain.assetsdiscovery.models.DiscoveredAsset
 import com.tangem.blockchain.blockchains.sui.network.SuiConstants
-import com.tangem.blockchain.blockchains.sui.network.rpc.SuiJsonRpcProvider
+import com.tangem.blockchain.blockchains.sui.network.grpc.SuiGrpcProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.network.MultiNetworkProvider
 import java.math.BigDecimal
 
 internal class SuiAssetsDiscoveryService(
-    private val multiNetworkProvider: MultiNetworkProvider<SuiJsonRpcProvider>,
+    private val multiNetworkProvider: MultiNetworkProvider<SuiGrpcProvider>,
     private val blockchain: Blockchain,
 ) : AssetsDiscoveryService {
 
@@ -22,7 +22,7 @@ internal class SuiAssetsDiscoveryService(
 
         return coins.groupBy { it.coinType }
             .mapNotNull { (coinType, entries) ->
-                val total = entries.fold(BigDecimal.ZERO) { acc, coin -> acc + coin.balance }
+                val total = entries.fold(BigDecimal.ZERO) { acc, coin -> acc + coin.mistBalance }
                 if (total <= BigDecimal.ZERO) return@mapNotNull null
                 if (coinType == SuiConstants.COIN_TYPE) {
                     DiscoveredAsset.Coin(
