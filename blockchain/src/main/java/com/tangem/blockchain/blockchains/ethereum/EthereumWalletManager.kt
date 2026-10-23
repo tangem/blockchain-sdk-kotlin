@@ -715,4 +715,10 @@ open class EthereumWalletManager(
     override suspend fun getTransactionReceipt(transactionHash: String): Result<EthereumTransactionReceipt?> {
         return networkProvider.getTransactionReceipt(transactionHash)
     }
+
+    /**
+     * The contract code deployed at [address] in this wallet's network — `"0x"` when there is none, so the
+     * caller can tell a contract from an externally owned account.
+     */
+    suspend fun getCode(address: String): Result<String> = networkProvider.getCode(address = address)
 }
