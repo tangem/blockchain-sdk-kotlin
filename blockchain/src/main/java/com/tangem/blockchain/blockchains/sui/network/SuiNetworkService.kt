@@ -1,11 +1,10 @@
 package com.tangem.blockchain.blockchains.sui.network
 
-import com.tangem.blockchain.blockchains.sui.model.SuiCoin
+import com.tangem.blockchain.blockchains.sui.model.SuiDryRunResult
+import com.tangem.blockchain.blockchains.sui.model.SuiExecuteResult
 import com.tangem.blockchain.blockchains.sui.model.SuiWalletInfo
 import com.tangem.blockchain.blockchains.sui.network.SuiConstants.COIN_TYPE
-import com.tangem.blockchain.blockchains.sui.network.rpc.SuiDryRunTransactionResponse
-import com.tangem.blockchain.blockchains.sui.network.rpc.SuiExecuteTransactionBlockResponse
-import com.tangem.blockchain.blockchains.sui.network.rpc.SuiJsonRpcProvider
+import com.tangem.blockchain.blockchains.sui.network.grpc.SuiGrpcProvider
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
@@ -13,69 +12,42 @@ import com.tangem.blockchain.network.MultiNetworkProvider
 import java.math.BigDecimal
 
 internal class SuiNetworkService(
-    providers: List<SuiJsonRpcProvider>,
+    providers: List<SuiGrpcProvider>,
     blockchain: Blockchain,
 ) {
 
-    private val multiJsonRpcProvider = MultiNetworkProvider(providers, blockchain)
+    private val multiProvider = MultiNetworkProvider(providers, blockchain)
 
-    val host: String get() = multiJsonRpcProvider.currentProvider.baseUrl
+    val host: String get() = multiProvider.currentProvider.baseUrl
 
     suspend fun getInfo(address: String): Result<SuiWalletInfo> {
-        val response = multiJsonRpcProvider
-            .performRequest(SuiJsonRpcProvider::getCoins, address)
+        val coins = multiProvider
+            .performRequest(SuiGrpcProvider::getCoins, address)
             .successOr { return it }
 
-        var totalSuiBalance = BigDecimal.ZERO
-        val coins = mutableListOf<SuiCoin>()
+        val totalSuiBalance = coins
+            .filter { it.coinType == COIN_TYPE }
+            .sumOf { it.mistBalance }
+            .movePointLeft(Blockchain.Sui.decimals())
 
-        for (coin in response) {
-            if (coin.coinType == COIN_TYPE) totalSuiBalance += coin.balance.movePointLeft(Blockchain.Sui.decimals())
-
-            val suiCoin = SuiCoin(
-                objectId = coin.coinObjectId,
-                coinType = coin.coinType,
-                mistBalance = coin.balance,
-                version = coin.version.toLong(),
-                digest = coin.digest,
-            )
-            coins.add(suiCoin)
-        }
-
-        val info = SuiWalletInfo(
-            suiTotalBalance = totalSuiBalance,
-            coins = coins,
-        )
-
-        return Result.Success(info)
+        return Result.Success(SuiWalletInfo(suiTotalBalance = totalSuiBalance, coins = coins))
     }
 
     suspend fun getReferenceGasPrice(): Result<BigDecimal> {
-        return multiJsonRpcProvider.performRequest(SuiJsonRpcProvider::getReferenceGasPrice)
+        return multiProvider.performRequest(SuiGrpcProvider::getReferenceGasPrice)
     }
 
-    suspend fun dryRunTransaction(transactionHash: String): Result<SuiDryRunTransactionResponse> {
-        val response = multiJsonRpcProvider
-            .performRequest(SuiJsonRpcProvider::dryRunTransaction, transactionHash)
-            .successOr { return it }
-
-        return Result.Success(response)
+    suspend fun dryRunTransaction(transactionBytes: String): Result<SuiDryRunResult> {
+        return multiProvider.performRequest(SuiGrpcProvider::dryRunTransaction, transactionBytes)
     }
 
-    suspend fun executeTransaction(
-        transactionHash: String,
-        signature: String,
-    ): Result<SuiExecuteTransactionBlockResponse> {
-        val response = multiJsonRpcProvider
-            .performRequest { executeTransaction(transactionHash, signature) }
-            .successOr { return it }
-
-        return Result.Success(response)
+    suspend fun executeTransaction(transactionBytes: String, signature: String): Result<SuiExecuteResult> {
+        return multiProvider.performRequest { executeTransaction(transactionBytes, signature) }
     }
 
     suspend fun isTransactionConfirmed(transactionHash: String): Boolean {
-        multiJsonRpcProvider
-            .performRequest(SuiJsonRpcProvider::getTransactionBlock, transactionHash)
+        multiProvider
+            .performRequest(SuiGrpcProvider::getTransaction, transactionHash)
             .successOr { return false }
 
         return true
