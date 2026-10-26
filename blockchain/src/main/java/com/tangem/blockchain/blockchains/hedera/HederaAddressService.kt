@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.hedera
 
-import com.hedera.hashgraph.sdk.AccountId
 import com.hedera.hashgraph.sdk.Client
 import com.tangem.blockchain.common.address.AddressService
 import com.tangem.blockchain.common.address.ContractAddressValidator
@@ -16,7 +15,7 @@ internal class HederaAddressService(isTestnet: Boolean) : AddressService(), Cont
 
     override fun validate(address: String): Boolean {
         // won't fail if there is no checksum
-        return runCatching { AccountId.fromString(address).validateChecksum(client) }
+        return runCatching { HederaUtils.parseAccountId(address).validateChecksum(client) }
             .fold(onSuccess = { true }, onFailure = { false })
     }
 

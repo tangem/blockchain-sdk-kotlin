@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString
 import com.squareup.moshi.adapter
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.blockchains.ethereum.models.EthereumCompiledTransaction
+import com.tangem.blockchain.blockchains.ethereum.toAcceptedCoinValue
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.extensions.hexToBigDecimal
@@ -109,6 +110,7 @@ internal open class EthereumTWTransactionBuilder(wallet: Wallet) : EthereumTrans
     private fun buildUncompiledSigningInput(transaction: TransactionData.Uncompiled): Ethereum.SigningInput {
         val amountValue = transaction.amount.value?.movePointRight(transaction.amount.decimals)
             ?.toBigInteger()
+            ?.let(blockchain::toAcceptedCoinValue)
             ?: throw BlockchainSdkError.CustomError("Fail to parse amount")
 
         val ethereumFee = transaction.fee as? Fee.Ethereum ?: throw BlockchainSdkError.CustomError("Invalid fee")

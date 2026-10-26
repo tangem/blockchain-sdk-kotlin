@@ -14,8 +14,8 @@ internal interface EtherScanApi {
         @Query("apikey") apiKey: String,
         @Query("action") action: String = "txlist",
         @Query("module") module: String = "account",
-        @Query("startblock") startBlock: Int = 0,
-        @Query("endblock") endBlock: Int = DEFAULT_END_BLOCK,
+        @Query("startblock") startBlock: Long = 0,
+        @Query("endblock") endBlock: Long = DEFAULT_END_BLOCK,
         @Query("sort") sort: String = "desc",
     ): PolygonTransactionHistoryResponse
 
@@ -28,14 +28,29 @@ internal interface EtherScanApi {
         @Query("offset") offset: Int,
         @Query("apikey") apiKey: String,
         @Query("action") action: String = "tokentx",
-        @Query("contractAddress") contractAddress: String?,
+        @Query("contractaddress") contractAddress: String?,
         @Query("module") module: String = "account",
-        @Query("startblock") startBlock: Int = 0,
-        @Query("endblock") endBlock: Int = DEFAULT_END_BLOCK,
+        @Query("startblock") startBlock: Long = 0,
+        @Query("endblock") endBlock: Long = DEFAULT_END_BLOCK,
         @Query("sort") sort: String = "desc",
     ): PolygonTransactionHistoryResponse
 
+    @Suppress("LongParameterList")
+    @GET("api")
+    suspend fun getInternalTransactionHistory(
+        @Query("chainid") chainId: Int,
+        @Query("address") address: String,
+        @Query("page") page: Int,
+        @Query("offset") offset: Int,
+        @Query("apikey") apiKey: String,
+        @Query("endblock") endBlock: Long = DEFAULT_END_BLOCK,
+        @Query("action") action: String = "txlistinternal",
+        @Query("module") module: String = "account",
+        @Query("startblock") startBlock: Long = 0,
+        @Query("sort") sort: String = "desc",
+    ): EtherscanInternalTransactionsResponse
+
     companion object {
-        private const val DEFAULT_END_BLOCK: Int = Int.MAX_VALUE
+        const val DEFAULT_END_BLOCK: Long = Int.MAX_VALUE.toLong()
     }
 }

@@ -78,7 +78,7 @@ object ResultChecker {
         return !isContractExecutionError(error.code, error.message)
     }
 
-    private fun isContractExecutionError(code: Int, message: String): Boolean {
+    internal fun isContractExecutionError(code: Int, message: String): Boolean {
         // Code 3 is the standard EIP-1474 code for execution reverted
         if (code == EXECUTION_REVERTED_ERROR_CODE) return true
         if (message.contains(EXECUTION_REVERTED_MESSAGE, ignoreCase = true)) return true

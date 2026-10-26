@@ -64,7 +64,7 @@ internal class HederaTransactionBuilder(
             val maxTransactionFee = Hbar.from(actualFeeValue)
 
             val sourceAccountId = AccountId.fromString(uncompiled.sourceAddress)
-            val destinationAccountId = AccountId.fromString(uncompiled.destinationAddress)
+            val destinationAccountId = HederaUtils.parseAccountId(uncompiled.destinationAddress)
             val memo = (uncompiled.extras as? HederaTransactionExtras)?.memo.orEmpty()
 
             val transaction = makeTransferTransaction(

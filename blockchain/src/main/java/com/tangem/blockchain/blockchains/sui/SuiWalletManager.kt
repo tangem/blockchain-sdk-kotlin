@@ -2,7 +2,7 @@ package com.tangem.blockchain.blockchains.sui
 
 import com.tangem.blockchain.blockchains.sui.model.SuiWalletInfo
 import com.tangem.blockchain.blockchains.sui.network.SuiNetworkService
-import com.tangem.blockchain.blockchains.sui.network.rpc.SuiJsonRpcProvider
+import com.tangem.blockchain.blockchains.sui.network.grpc.SuiGrpcProvider
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.transaction.Fee
@@ -16,7 +16,7 @@ import kotlinx.coroutines.coroutineScope
 
 internal class SuiWalletManager(
     wallet: Wallet,
-    networkProviders: List<SuiJsonRpcProvider>,
+    networkProviders: List<SuiGrpcProvider>,
     private val addressService: SuiAddressService,
 ) : WalletManager(wallet), UtxoBlockchainManager {
 
@@ -67,11 +67,11 @@ internal class SuiWalletManager(
             .successOr { return it }
 
         val txResponse = networkService.executeTransaction(
-            transactionHash = transactionOutput.unsignedTx,
+            transactionBytes = transactionOutput.unsignedTx,
             signature = transactionOutput.signature,
         ).successOr { return it }
 
-        if (!txResponse.effects.status.isSuccess) {
+        if (!txResponse.isSuccess) {
             return Result.Failure(BlockchainSdkError.FailedToSendException)
         }
 
@@ -90,17 +90,16 @@ internal class SuiWalletManager(
         val info = walletInfo ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
         val gasPrice = networkService.getReferenceGasPrice()
             .successOr { return it }
-        val transactionHash = txBuilder.buildForDryRun(info, amount, destination, gasPrice)
+        val transactionBytes = txBuilder.buildForDryRun(info, amount, destination, gasPrice)
             .successOr { return it }
-        val txResponse = networkService.dryRunTransaction(transactionHash)
+        val dryRunResult = networkService.dryRunTransaction(transactionBytes)
             .successOr { return it }
 
-        if (!txResponse.effects.status.isSuccess) {
+        if (!dryRunResult.isSuccess) {
             return txBuilder.checkOnFailureFeeLoad(info, amount)
         }
 
-        val gasUsed = txResponse.effects.gasUsed
-        val totalGasMist = gasUsed.computationCost + gasUsed.storageCost
+        val totalGasMist = dryRunResult.computationCost + dryRunResult.storageCost
 
         val feeAmount = Amount(
             blockchain = Blockchain.Sui,
@@ -108,7 +107,7 @@ internal class SuiWalletManager(
         )
         val fee = Fee.Sui(
             amount = feeAmount,
-            gasPrice = txResponse.input.gasData.price.toLong(),
+            gasPrice = dryRunResult.gasPrice,
             gasBudget = totalGasMist.toLong(),
         )
 

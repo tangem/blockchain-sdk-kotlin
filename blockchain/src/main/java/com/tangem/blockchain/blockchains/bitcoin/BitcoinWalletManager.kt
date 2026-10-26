@@ -183,6 +183,13 @@ internal open class BitcoinWalletManager(
         }
     }
 
+    /** Bitcoin has no internal transfers, so the flag must not take the call off the xpub history */
+    override suspend fun getTransactionHistoryState(
+        address: String,
+        filterType: TransactionHistoryRequest.FilterType,
+        shouldIncludeInternalTransfers: Boolean,
+    ): TransactionHistoryState = getTransactionHistoryState(address, filterType)
+
     override suspend fun getTransactionsHistory(
         request: TransactionHistoryRequest,
     ): Result<PaginationWrapper<TransactionHistoryItem>> {
@@ -392,8 +399,13 @@ internal open class BitcoinWalletManager(
         Logger.d(this::class.java.simpleName, "Balance is ${response.balance}")
 
         wallet.changeAmountValue(AmountType.Coin, response.balance)
-        transactionBuilder.unspentOutputs = response.unspentOutputs
-        outputsCount = response.unspentOutputs.size
+        val unspentOutputs = UnspentOutputValidator.filterValid(
+            outputs = response.unspentOutputs,
+            outputIndex = { it.outputIndex },
+            amount = { it.amount },
+        )
+        transactionBuilder.unspentOutputs = unspentOutputs
+        outputsCount = unspentOutputs.size
 
         if (response.recentTransactions.isNotEmpty()) {
             updateRecentTransactionsBasic(response.recentTransactions)

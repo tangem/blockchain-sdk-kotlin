@@ -68,4 +68,38 @@ internal class YieldSupplyProviderFactoryTest {
         Truth.assertThat(provider.isSupported()).isFalse()
         Truth.assertThat(provider).isInstanceOf(DefaultYieldSupplyProvider::class.java)
     }
+
+    @Test
+    fun `returns DefaultYieldSupplyProvider for Monad when isMonadYieldSupplyEnabled is false`() {
+        val factory = YieldSupplyProviderFactory(dataStorage)
+
+        every { wallet.blockchain } returns Blockchain.Monad
+
+        DepsContainer.onInit(
+            config = mockk<BlockchainSdkConfig>(relaxed = true),
+            featureToggles = BlockchainFeatureToggles(isYieldSupplyEnabled = true),
+        )
+
+        val provider = factory.makeProvider(wallet, networkProvider)
+
+        Truth.assertThat(provider.isSupported()).isFalse()
+        Truth.assertThat(provider).isInstanceOf(DefaultYieldSupplyProvider::class.java)
+    }
+
+    @Test
+    fun `returns EthereumYieldSupplyProvider for Monad when isMonadYieldSupplyEnabled is true`() {
+        val factory = YieldSupplyProviderFactory(dataStorage)
+
+        every { wallet.blockchain } returns Blockchain.Monad
+
+        DepsContainer.onInit(
+            config = mockk<BlockchainSdkConfig>(relaxed = true),
+            featureToggles = BlockchainFeatureToggles(isYieldSupplyEnabled = true, isMonadYieldSupplyEnabled = true),
+        )
+
+        val provider = factory.makeProvider(wallet, networkProvider)
+
+        Truth.assertThat(provider.isSupported()).isTrue()
+        Truth.assertThat(provider).isInstanceOf(EthereumYieldSupplyProvider::class.java)
+    }
 }

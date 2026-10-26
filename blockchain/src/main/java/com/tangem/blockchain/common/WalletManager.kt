@@ -22,6 +22,8 @@ import com.tangem.blockchain.tokenbalance.DefaultTokenBalanceProvider
 import com.tangem.blockchain.tokenbalance.TokenBalanceProvider
 import com.tangem.blockchain.transactionhistory.DefaultTransactionHistoryProvider
 import com.tangem.blockchain.transactionhistory.TransactionHistoryProvider
+import com.tangem.blockchain.transactionhistory.TransactionHistoryState
+import com.tangem.blockchain.transactionhistory.models.TransactionHistoryRequest
 import com.tangem.blockchain.yieldsupply.DefaultYieldSupplyProvider
 import com.tangem.blockchain.yieldsupply.YieldSupplyProvider
 import com.tangem.common.CompletionResult
@@ -68,6 +70,8 @@ abstract class WalletManager(
 
     private val updateDebounced = DebouncedInvoke()
 
+    private val historyProvider = transactionHistoryProvider
+
     /**
      * Update wallet state. [forceUpdate] to skip debounce
      */
@@ -83,6 +87,20 @@ abstract class WalletManager(
         callData: SmartContractCallData?,
     ): Result<TransactionFee> {
         return getFee(amount, destination, callData)
+    }
+
+    /**
+     * Without the flag the call goes through the two-argument overload, which managers customize (e.g. the xpub history
+     * of [com.tangem.blockchain.blockchains.bitcoin.BitcoinWalletManager]); a delegated call would bypass it
+     */
+    override suspend fun getTransactionHistoryState(
+        address: String,
+        filterType: TransactionHistoryRequest.FilterType,
+        shouldIncludeInternalTransfers: Boolean,
+    ): TransactionHistoryState = if (shouldIncludeInternalTransfers) {
+        historyProvider.getTransactionHistoryState(address, filterType, shouldIncludeInternalTransfers = true)
+    } else {
+        getTransactionHistoryState(address, filterType)
     }
 
     internal abstract suspend fun updateInternal()

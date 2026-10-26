@@ -13,7 +13,7 @@ internal class GachaConfigParserTest {
     private val data = Base64.getDecoder().decode(
         "mwyq4B76zIKtbdnm3fQfKiZwulw19xJe+Y62TcL9MF5YyYuupu7XZOkoOVUJZf/U1krKr0bUXfcxjltPV8kMSH1gYl2Cm4N7" +
             "hqQIUEd4g/rZZ93XJGmfY1Im7dYaVhpfB0GPFwNaf39/LRy7KpYTz3xzEH7Z5ZuyXLdQy82fbyK8F4zfpFdYmoNiez2h0gai" +
-            "djS66O7bgD1GanQ/NMIfiiDM0v1mCX+YZAAAAQH/",
+            "djS66O7bgD1GanQ/NMIfiiDM0v1mCX+YZAAAAQH/9AE=",
     )
 
     @Test
@@ -26,7 +26,7 @@ internal class GachaConfigParserTest {
         assertThat(config.gachaWallet).isEqualTo("A4ahkivAG4NoZAE8Sy4qv8nn2DU9yoXRQcttuCeGtTJv")
         assertThat(config.gachaUsdcAccount).isEqualTo("9ZSgA3PMjeAU8K6CWzgJ8oDnhZwwSgHZu6KP3X95t7Jq")
         assertThat(config.feeUsdcAccount).isEqualTo("9qsWLjBgicHNncaM1qtLb4jqj4a4NixMwvNXNmsqQyV9")
-        assertThat(config.feeBps).isEqualTo(100)
+        assertThat(config.minFeeBps).isEqualTo(100)
         assertThat(config.bump).isEqualTo(255)
     }
 
@@ -53,7 +53,7 @@ internal class GachaConfigParserTest {
 
     @Test
     fun `truncated data is rejected`() {
-        // One byte short is enough: the missing field would be the bump.
+        // One byte short is enough: the missing field would be max_fee_bps.
         assertThat(GachaConfigParser.parse(data.copyOf(data.size - 1))).isNull()
         assertThat(GachaConfigParser.parse(ByteArray(0))).isNull()
     }

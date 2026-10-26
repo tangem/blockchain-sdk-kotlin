@@ -6,8 +6,10 @@ import com.tangem.blockchain.blockchains.electroneum.ElectroneumProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.EthereumProvidersBuilder
 import com.tangem.blockchain.blockchains.ethereum.providers.*
 import com.tangem.blockchain.blockchains.igra.IgraProvidersBuilder
+import com.tangem.blockchain.blockchains.onyx.OnyxProvidersBuilder
 import com.tangem.blockchain.blockchains.optimism.OptimismProvidersBuilder
 import com.tangem.blockchain.blockchains.plasma.PlasmaProvidersBuilder
+import com.tangem.blockchain.blockchains.publicmasterpiece.PublicMasterpieceProvidersBuilder
 import com.tangem.blockchain.blockchains.quai.QuaiJsonRpcProvider
 import com.tangem.blockchain.blockchains.quai.QuaiNetworkService
 import com.tangem.blockchain.blockchains.robinhood.RobinhoodProvidersBuilder
@@ -185,10 +187,12 @@ internal object EvmNetworkServiceFactory {
             Blockchain.Plasma, Blockchain.PlasmaTestnet -> PlasmaProvidersBuilder(providerTypes, config)
             Blockchain.Adi, Blockchain.AdiTestnet -> AdiProvidersBuilder(providerTypes, config)
             Blockchain.Arc, Blockchain.ArcTestnet -> ArcProvidersBuilder(providerTypes, config)
+            Blockchain.Onyx, Blockchain.OnyxTestnet -> OnyxProvidersBuilder(providerTypes, config)
             Blockchain.SeiEvm, Blockchain.SeiEvmTestnet -> SeiEvmProvidersBuilder(providerTypes, config)
             Blockchain.Robinhood, Blockchain.RobinhoodTestnet -> RobinhoodProvidersBuilder(providerTypes, config)
             Blockchain.Igra, Blockchain.IgraTestnet -> IgraProvidersBuilder(providerTypes, config)
             Blockchain.Electroneum, Blockchain.ElectroneumTestnet -> ElectroneumProvidersBuilder(providerTypes, config)
+            Blockchain.PublicMasterpiece -> PublicMasterpieceProvidersBuilder(providerTypes, config)
             else -> null
         }
     }
