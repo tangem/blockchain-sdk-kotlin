@@ -16,6 +16,7 @@ data class BlockchainSdkConfig(
     val quickNodeRobinhoodCredentials: QuickNodeCredentials? = null,
     val quickNodeXrpCredentials: QuickNodeCredentials? = null,
     val quickNodeArcCredentials: QuickNodeCredentials? = null,
+    val quickNodeSuiCredentials: QuickNodeCredentials? = null,
     val nowNodeCredentials: NowNodeCredentials? = null,
     val getBlockCredentials: GetBlockCredentials? = null,
     val tonCenterCredentials: TonCenterCredentials? = null,
@@ -105,6 +106,7 @@ data class GetBlockAccessToken(
     val blockBookRest: String? = null,
     val rest: String? = null,
     val rosetta: String? = null,
+    val grpc: String? = null,
 )
 
 @Serializable
