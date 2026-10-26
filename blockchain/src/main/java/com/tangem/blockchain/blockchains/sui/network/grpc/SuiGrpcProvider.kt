@@ -3,10 +3,13 @@ package com.tangem.blockchain.blockchains.sui.network.grpc
 import com.squareup.wire.GrpcClient
 import com.squareup.wire.GrpcException
 import com.squareup.wire.GrpcStatus
+import com.tangem.blockchain.blockchains.sui.model.SuiBalance
 import com.tangem.blockchain.blockchains.sui.model.SuiCoin
 import com.tangem.blockchain.blockchains.sui.model.SuiDryRunResult
+import com.tangem.blockchain.blockchains.sui.model.SuiEpoch
 import com.tangem.blockchain.blockchains.sui.model.SuiExecuteResult
 import com.tangem.blockchain.blockchains.sui.network.SuiConstants
+import com.tangem.blockchain.blockchains.sui.network.grpc.proto.Balance
 import com.tangem.blockchain.blockchains.sui.network.grpc.proto.Bcs
 import com.tangem.blockchain.blockchains.sui.network.grpc.proto.ExecuteTransactionRequest
 import com.tangem.blockchain.blockchains.sui.network.grpc.proto.FieldMask
@@ -15,6 +18,7 @@ import com.tangem.blockchain.blockchains.sui.network.grpc.proto.GetTransactionRe
 import com.tangem.blockchain.blockchains.sui.network.grpc.proto.GrpcLedgerServiceClient
 import com.tangem.blockchain.blockchains.sui.network.grpc.proto.GrpcStateServiceClient
 import com.tangem.blockchain.blockchains.sui.network.grpc.proto.GrpcTransactionExecutionServiceClient
+import com.tangem.blockchain.blockchains.sui.network.grpc.proto.ListBalancesRequest
 import com.tangem.blockchain.blockchains.sui.network.grpc.proto.ListOwnedObjectsRequest
 import com.tangem.blockchain.blockchains.sui.network.grpc.proto.Object
 import com.tangem.blockchain.blockchains.sui.network.grpc.proto.SimulateTransactionRequest
@@ -54,12 +58,15 @@ internal class SuiGrpcProvider(
     private val stateService by lazy { GrpcStateServiceClient(grpcClient) }
     private val executionService by lazy { GrpcTransactionExecutionServiceClient(grpcClient) }
 
-    suspend fun getReferenceGasPrice(): Result<BigDecimal> = grpcCall {
-        val request = GetEpochRequest(read_mask = FieldMask(paths = listOf("reference_gas_price")))
-        val response = ledgerService.GetEpoch().execute(request)
+    suspend fun getEpoch(): Result<SuiEpoch> = grpcCall {
+        val request = GetEpochRequest(read_mask = FieldMask(paths = listOf("epoch", "reference_gas_price")))
+        val epoch = ledgerService.GetEpoch().execute(request).epoch ?: missingField("epoch")
 
-        response.epoch?.reference_gas_price?.toUnsignedBigDecimal()
-            ?: missingField("epoch.reference_gas_price")
+        SuiEpoch(
+            epoch = epoch.epoch ?: missingField("epoch.epoch"),
+            referenceGasPrice = epoch.reference_gas_price?.toUnsignedBigDecimal()
+                ?: missingField("epoch.reference_gas_price"),
+        )
     }
 
     suspend fun getCoins(address: String): Result<List<SuiCoin>> = grpcCall {
@@ -79,6 +86,19 @@ internal class SuiGrpcProvider(
         } while (pageToken != null)
 
         coins
+    }
+
+    suspend fun getBalances(address: String): Result<List<SuiBalance>> = grpcCall {
+        val balances = mutableListOf<SuiBalance>()
+        var pageToken: ByteString? = null
+        do {
+            val request = ListBalancesRequest(owner = address, page_size = MAX_PAGE_SIZE, page_token = pageToken)
+            val response = stateService.ListBalances().execute(request)
+            response.balances.mapTo(balances) { it.toSuiBalance() }
+            pageToken = response.next_page_token?.takeIf { it.size > 0 }
+        } while (pageToken != null)
+
+        balances
     }
 
     suspend fun dryRunTransaction(transactionBytes: String): Result<SuiDryRunResult> = grpcCall {
@@ -157,6 +177,11 @@ internal class SuiGrpcProvider(
             mistBalance = balance?.toUnsignedBigDecimal() ?: missingField("object.balance"),
         )
     }
+
+    private fun Balance.toSuiBalance(): SuiBalance = SuiBalance(
+        coinType = SuiConstants.normalizeCoinType(coin_type ?: missingField("balance.coin_type")),
+        mistAddressBalance = address_balance?.toUnsignedBigDecimal() ?: BigDecimal.ZERO,
+    )
 
     private fun String.decodeBase64OrThrow(): ByteString =
         decodeBase64() ?: throw IllegalArgumentException("Transaction data is not a valid base64 string")

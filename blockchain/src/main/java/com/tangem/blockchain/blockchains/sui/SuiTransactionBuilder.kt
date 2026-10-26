@@ -2,6 +2,7 @@ package com.tangem.blockchain.blockchains.sui
 
 import com.tangem.blockchain.blockchains.sui.model.SuiCoin
 import com.tangem.blockchain.blockchains.sui.model.SuiWalletInfo
+import com.tangem.blockchain.blockchains.sui.network.SuiConstants
 import com.tangem.blockchain.blockchains.sui.network.SuiConstants.COIN_TYPE
 import com.tangem.blockchain.blockchains.sui.network.SuiConstants.SUI_GAS_BUDGET_MAX_VALUE
 import com.tangem.blockchain.common.*
@@ -20,14 +21,35 @@ import java.math.BigDecimal
 internal class SuiTransactionBuilder(
     private val walletAddress: String,
     private val publicKey: Wallet.PublicKey,
+    blockchain: Blockchain,
 ) {
+
+    private val addressBalanceTxBuilder = SuiAddressBalanceTransactionBuilder(
+        walletAddress = walletAddress,
+        chainIdentifier = SuiConstants.chainIdentifierOf(blockchain),
+    )
 
     fun buildForDryRun(
         walletInfo: SuiWalletInfo,
         amount: Amount,
         destination: String,
         gasPrice: BigDecimal,
+        epoch: Long,
     ): Result<String> {
+        val addressBalanceTransaction = addressBalanceTxBuilder.buildForDryRun(
+            walletInfo = walletInfo,
+            amount = amount,
+            destination = destination,
+            gasPrice = gasPrice.toLong(),
+            epoch = epoch,
+        )
+        if (addressBalanceTransaction != null) {
+            return addressBalanceTransaction.fold(
+                success = { Result.Success(it) },
+                failure = { checkOnFailureFeeLoad(walletInfo, amount) },
+            )
+        }
+
         return when (amount.type) {
             AmountType.Coin -> buildForInspectCoinTransaction(
                 walletInfo = walletInfo,
@@ -58,8 +80,9 @@ internal class SuiTransactionBuilder(
     private fun isCoinGasLessThenOneForTokenTransaction(walletInfo: SuiWalletInfo, amount: Amount): Boolean {
         return when (amount.type) {
             is AmountType.Token -> {
-                val coinGas = findCoinGas(walletInfo)?.mistBalance ?: return true
-                coinGas < BigDecimal.ONE.movePointRight(Blockchain.Sui.decimals())
+                val coinGas = findCoinGas(walletInfo)?.mistBalance ?: BigDecimal.ZERO
+                val addressBalanceGas = walletInfo.mistAddressBalanceOf(COIN_TYPE)
+                maxOf(coinGas, addressBalanceGas) < BigDecimal.ONE.movePointRight(Blockchain.Sui.decimals())
             }
             else -> false
         }
@@ -75,7 +98,7 @@ internal class SuiTransactionBuilder(
             ?.movePointRight(Blockchain.Sui.decimals())
             ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
 
-        val totalBalanceMist = walletInfo.suiTotalBalance.movePointRight(Blockchain.Sui.decimals())
+        val totalBalanceMist = walletInfo.suiCoinsBalance.movePointRight(Blockchain.Sui.decimals())
         val isPayAll = amountMist == totalBalanceMist
         val availableBudget = if (isPayAll) {
             totalBalanceMist - BigDecimal.ONE
@@ -122,11 +145,15 @@ internal class SuiTransactionBuilder(
         txData: TransactionData,
         txSigner: TransactionSigner,
         onSigned: () -> Unit,
+        getEpoch: suspend () -> Result<Long>,
     ): Result<Sui.SigningOutput> {
         val uncompiledTransaction = txData.requireUncompiled()
         val amount = uncompiledTransaction.amount
 
-        val input = when (amount.type) {
+        val addressBalanceTransaction = addressBalanceTxBuilder
+            .buildForSend(walletInfo = walletInfo, transaction = uncompiledTransaction, getEpoch = getEpoch)
+            ?.successOr { return it }
+        val input = addressBalanceTransaction?.let(::signDirectInput) ?: when (amount.type) {
             AmountType.Coin -> buildSigningInputObject(
                 walletInfo = walletInfo,
                 destinationAddress = uncompiledTransaction.destinationAddress,
@@ -184,6 +211,10 @@ internal class SuiTransactionBuilder(
         return Result.Success(compiledOutput)
     }
 
+    private fun signDirectInput(unsignedTransaction: String): Sui.SigningInput = Sui.SigningInput.newBuilder()
+        .setSignDirectMessage(Sui.SignDirect.newBuilder().setUnsignedTxMsg(unsignedTransaction))
+        .build()
+
     private fun buildSigningInputObject(
         walletInfo: SuiWalletInfo,
         destinationAddress: String,
@@ -210,7 +241,7 @@ internal class SuiTransactionBuilder(
         val coins = mutableListOf<Sui.ObjectRef>()
         var coinsBalance = BigDecimal.ZERO
 
-        walletInfo.coins.forEach { coin ->
+        walletInfo.coinsOf(COIN_TYPE).forEach { coin ->
             val coinObject = Sui.ObjectRef.newBuilder().apply {
                 objectId = coin.objectId
                 version = coin.version
