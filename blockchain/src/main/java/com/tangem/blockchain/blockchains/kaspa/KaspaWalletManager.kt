@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.kaspa.krc20.KaspaKRC20NetworkProvider
 import com.tangem.blockchain.blockchains.kaspa.krc20.model.RedeemScript
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaInfoResponse
 import com.tangem.blockchain.blockchains.kaspa.network.KaspaNetworkProvider
+import com.tangem.blockchain.blockchains.kaspa.network.KaspaUnspentOutput
 import com.tangem.blockchain.common.*
 import com.tangem.blockchain.common.datastorage.BlockchainSavedData
 import com.tangem.blockchain.common.datastorage.implementations.AdvancedDataStorage
@@ -82,7 +83,7 @@ internal class KaspaWalletManager(
             wallet.recentTransactions.clear()
         }
         wallet.changeAmountValue(AmountType.Coin, response.balance)
-        transactionBuilder.unspentOutputs = response.unspentOutputs
+        transactionBuilder.unspentOutputs = response.unspentOutputs.filterValid()
     }
 
     private fun updateWalletTokens(tokensInfo: Map<Token, Result<KaspaKRC20InfoResponse>>) {
@@ -461,9 +462,17 @@ internal class KaspaWalletManager(
     private suspend fun updateUnspentOutputs() {
         coroutineScope {
             networkProvider.getInfo(wallet.address).map {
-                transactionBuilder.unspentOutputs = it.unspentOutputs
+                transactionBuilder.unspentOutputs = it.unspentOutputs.filterValid()
             }
         }
+    }
+
+    private fun List<KaspaUnspentOutput>.filterValid(): List<KaspaUnspentOutput> {
+        return UnspentOutputValidator.filterValid(
+            outputs = this,
+            outputIndex = { it.outputIndex },
+            amount = { it.amount },
+        )
     }
 
     private suspend fun getIncompleteTokenTransaction(

@@ -34,6 +34,12 @@ internal class EtherscanTransactionHistoryProvider(
     private val etherscanApiKey: String,
 ) : TransactionHistoryProvider {
 
+    private val internalTransfersLoader = EtherscanInternalTransfersLoader(
+        blockchain = blockchain,
+        api = api,
+        apiKey = etherscanApiKey,
+    )
+
     @Suppress("TooGenericExceptionThrown")
     override suspend fun getTransactionHistoryState(
         address: String,
@@ -83,12 +89,36 @@ internal class EtherscanTransactionHistoryProvider(
         }
     }
 
+    override suspend fun getTransactionHistoryState(
+        address: String,
+        filterType: TransactionHistoryRequest.FilterType,
+        shouldIncludeInternalTransfers: Boolean,
+    ): TransactionHistoryState {
+        if (!shouldIncludeInternalTransfers || filterType != TransactionHistoryRequest.FilterType.Coin) {
+            return getTransactionHistoryState(address, filterType)
+        }
+        return try {
+            val hasAny = internalTransfersLoader.hasAny(address = formatAddressIfNeeded(address))
+            if (hasAny) TransactionHistoryState.Success.HasTransactions(1) else TransactionHistoryState.Success.Empty
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            TransactionHistoryState.Failed.FetchError(e)
+        }
+    }
+
     @Suppress("TooGenericExceptionThrown")
     override suspend fun getTransactionsHistory(
         request: TransactionHistoryRequest,
     ): Result<PaginationWrapper<TransactionHistoryItem>> {
         return try {
             val formattedAddress = formatAddressIfNeeded(request.address)
+            val isCoinHistory = request.filterType == TransactionHistoryRequest.FilterType.Coin
+            if (request.shouldIncludeInternalTransfers && isCoinHistory) {
+                return internalTransfersLoader.loadPage(request = request, address = formattedAddress) { tx ->
+                    tx.toTransactionHistoryItem(walletAddress = formattedAddress, filterType = request.filterType)
+                }
+            }
             val pageToLoad = request.intPageToLoad
             val response = withContext(Dispatchers.IO) {
                 when (request.filterType) {
@@ -146,32 +176,46 @@ internal class EtherscanTransactionHistoryProvider(
     private fun PolygonScanResult.toTransactionHistoryItems(
         walletAddress: String,
         filterType: TransactionHistoryRequest.FilterType,
-    ): List<TransactionHistoryItem> {
-        return this.transactions.orEmpty().mapNotNull { transaction ->
-            val sourceAddress = transaction.from
+    ): List<TransactionHistoryItem> = transactions.orEmpty().mapNotNull { transaction ->
+        transaction.toTransactionHistoryItem(walletAddress = walletAddress, filterType = filterType)
+    }
 
-            val transactionAmount = transaction.extractAmount(filterType = filterType).guard {
-                Log.info { "Transaction with invalid value  $transaction received" }
-                return@mapNotNull null
-            }
-            if (isLikelySpamTransaction(amount = transactionAmount, filterType = filterType)) {
-                return@mapNotNull null
-            }
-
-            val isOutgoing = sourceAddress.equals(walletAddress, ignoreCase = true)
-
-            TransactionHistoryItem(
-                txHash = transaction.hash,
-                timestamp = TimeUnit.SECONDS.toMillis(transaction.timeStamp.toLong()),
-                isOutgoing = isOutgoing,
-                destinationType = transaction.extractDestinationType(filterType = filterType, address = transaction.to),
-                sourceType = TransactionHistoryItem.SourceType.Single(address = sourceAddress),
-                status = transaction.extractStatus(),
-                type = transaction.extractType(filterType),
-                amount = transactionAmount,
-                fee = transaction.feeAmount(blockchain),
-            )
+    private fun PolygonTransaction.toTransactionHistoryItem(
+        walletAddress: String,
+        filterType: TransactionHistoryRequest.FilterType,
+    ): TransactionHistoryItem? {
+        if (!belongsTo(filterType)) {
+            Log.info { "Transaction of another contract $contractAddress received" }
+            return null
         }
+        val transactionAmount = extractAmount(filterType = filterType).guard {
+            Log.info { "Transaction with invalid value  $this received" }
+            return null
+        }
+        if (isLikelySpamTransaction(amount = transactionAmount, filterType = filterType)) return null
+
+        return TransactionHistoryItem(
+            txHash = hash,
+            timestamp = TimeUnit.SECONDS.toMillis(timeStamp.toLong()),
+            isOutgoing = from.equals(walletAddress, ignoreCase = true),
+            destinationType = extractDestinationType(filterType = filterType, address = to),
+            sourceType = TransactionHistoryItem.SourceType.Single(address = from),
+            status = extractStatus(),
+            type = extractType(filterType),
+            amount = transactionAmount,
+            fee = feeAmount(blockchain),
+        )
+    }
+
+    /**
+     * Some Etherscan-compatible explorers ignore the contract filter of the request and return transfers of all
+     * tokens of the address, so a transfer of another token must not be mapped with the requested token's decimals.
+     */
+    private fun PolygonTransaction.belongsTo(filterType: TransactionHistoryRequest.FilterType): Boolean {
+        if (filterType !is TransactionHistoryRequest.FilterType.Contract) return true
+        val requestedContract = formatAddressIfNeeded(filterType.tokenInfo.contractAddress)
+        val transactionContract = contractAddress?.let(::formatAddressIfNeeded)
+        return transactionContract.equals(requestedContract, ignoreCase = true)
     }
 
     private fun PolygonTransaction.feeAmount(blockchain: Blockchain): Amount {

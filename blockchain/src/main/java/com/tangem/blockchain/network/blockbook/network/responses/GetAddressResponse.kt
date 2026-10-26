@@ -76,6 +76,7 @@ data class GetAddressResponse(
         data class Vin(
             @Json(name = "addresses") val addresses: List<String>?,
             @Json(name = "value") val value: String?,
+            @Json(name = "isAddress") val isAddress: Boolean? = null,
             // Present only in xpub queries
             @Json(name = "isOwn") val isOwn: Boolean? = null,
         )
@@ -85,6 +86,7 @@ data class GetAddressResponse(
             @Json(name = "addresses") val addresses: List<String>?,
             @Json(name = "hex") val hex: String?,
             @Json(name = "value") val value: String?,
+            @Json(name = "isAddress") val isAddress: Boolean? = null,
             // Present only in xpub queries
             @Json(name = "isOwn") val isOwn: Boolean? = null,
         )
@@ -111,6 +113,8 @@ data class GetAddressResponse(
             @Json(name = "gasPrice") val gasPrice: String?,
             @Json(name = "data") val data: String?,
             @Json(name = "parsedData") val parsedData: ParsedData?,
+            @Json(name = "error") val error: String? = null,
+            @Json(name = "internalTransfers") val internalTransfers: List<InternalTransfer>? = null,
         ) {
 
             @JsonClass(generateAdapter = true)
@@ -118,6 +122,15 @@ data class GetAddressResponse(
                 // / First 4byte from data. E.g. `0x617ba037`
                 @Json(name = "methodId") val methodId: String,
                 @Json(name = "name") val name: String,
+            )
+
+            /** [type]: 0 — CALL, 1 — CREATE (CREATE2 too), 2 — SELFDESTRUCT */
+            @JsonClass(generateAdapter = true)
+            data class InternalTransfer(
+                @Json(name = "type") val type: Int,
+                @Json(name = "from") val from: String,
+                @Json(name = "to") val to: String,
+                @Json(name = "value") val value: String,
             )
         }
 
@@ -151,3 +164,19 @@ fun GetAddressResponse.Transaction.feeAmount(blockchain: Blockchain): Amount {
         blockchain = blockchain,
     )
 }
+
+/**
+ * For bare multisig BlockBook lists the P2PKH address of every key and sets `isAddress = false`, so
+ * `OP_0 <wallet key> OP_1 OP_CHECKMULTISIG`, spendable by anyone, lists exactly the wallet's address.
+ * BlockBook's own `isOwn` ignores `isAddress` and would accept it.
+ */
+internal fun GetAddressResponse.Transaction.Vin.isOwnedBy(walletAddress: String): Boolean =
+    isAddress != false && addresses == listOf(walletAddress)
+
+internal fun GetAddressResponse.Transaction.Vout.isOwnedBy(walletAddress: String): Boolean =
+    isAddress != false && addresses == listOf(walletAddress)
+
+/** BlockBook's `isOwn` plus the `isAddress` check it lacks, see [isOwnedBy] */
+internal fun GetAddressResponse.Transaction.Vin.isOwnedByXpub(): Boolean = isOwn == true && isAddress != false
+
+internal fun GetAddressResponse.Transaction.Vout.isOwnedByXpub(): Boolean = isOwn == true && isAddress != false

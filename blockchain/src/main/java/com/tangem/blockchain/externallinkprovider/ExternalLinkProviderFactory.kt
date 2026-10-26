@@ -120,6 +120,8 @@ internal object ExternalLinkProviderFactory {
             Blockchain.Igra, Blockchain.IgraTestnet -> IgraExternalLinkProvider(isTestnet)
             Blockchain.Electroneum, Blockchain.ElectroneumTestnet -> ElectroneumExternalLinkProvider(isTestnet)
             Blockchain.Arc, Blockchain.ArcTestnet -> ArcExternalLinkProvider(isTestnet)
+            Blockchain.Onyx, Blockchain.OnyxTestnet -> OnyxExternalLinkProvider(isTestnet)
+            Blockchain.PublicMasterpiece -> PublicMasterpieceExternalLinkProvider()
         }
     }
 }

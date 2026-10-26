@@ -67,6 +67,7 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.Igra, Blockchain.IgraTestnet,
             Blockchain.Electroneum, Blockchain.ElectroneumTestnet,
             Blockchain.Arc, Blockchain.ArcTestnet,
+            Blockchain.PublicMasterpiece,
             -> true
             Blockchain.EthereumClassic, Blockchain.EthereumClassicTestnet, // eth_feeHistory all zeroes
             Blockchain.EthereumPow, Blockchain.EthereumPowTestnet, // eth_feeHistory with zeros
@@ -94,6 +95,7 @@ val Blockchain.isSupportEIP1559: Boolean
             Blockchain.ZkLinkNova, Blockchain.ZkLinkNovaTestnet,
             Blockchain.Quai, Blockchain.QuaiTestnet,
             Blockchain.Adi, Blockchain.AdiTestnet,
+            Blockchain.Onyx, Blockchain.OnyxTestnet, // eth_feeHistory with zero base fee
             -> false
             else -> error("Don't forget about evm here")
         }

@@ -1,6 +1,5 @@
 package com.tangem.blockchain.blockchains.hedera
 
-import com.hedera.hashgraph.sdk.AccountId
 import com.hedera.hashgraph.sdk.Transaction
 import com.hedera.hashgraph.sdk.TransactionResponse
 import com.tangem.blockchain.blockchains.hedera.models.HederaAccountBalance
@@ -688,7 +687,7 @@ internal class HederaWalletManager(
     /** Used to query the status of the `receiving` (`destination`) account. */
     private suspend fun isAccountExist(destinationAddress: String): Result<Boolean> {
         val destinationAccountId = try {
-            AccountId.fromString(destinationAddress)
+            HederaUtils.parseAccountId(destinationAddress)
         } catch (e: Exception) {
             return Result.Success(false)
         }

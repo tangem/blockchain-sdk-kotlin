@@ -776,10 +776,53 @@ class TronTransactionHistoryProviderTest {
 
     @Test
     fun `token transfer matched by from address when wallet is sender`() = runTest {
-        // contract matches but `to` is the recipient, wallet is `from` -> the || branch on `from` matches
         val transfer =
             tokenTransfer(from = WALLET, to = RECIPIENT, value = "1000000", token = CONTRACT)
         val tx = coinTransaction(tokenTransfers = listOf(transfer))
+        val result = singleContractItem(tx, decimals = 6)
+
+        assertThat(result.amount.value!!.compareTo(BigDecimal("1"))).isEqualTo(0)
+    }
+
+    @Test
+    fun `forged transfer of another contract does not turn a zero token leg into an outgoing send`() = runTest {
+        val forged = tokenTransfer(from = WALLET, to = LOOKALIKE, value = "1500000000", token = FAKE_CONTRACT)
+        val zeroLeg = tokenTransfer(from = WALLET, to = LOOKALIKE, value = "0", token = CONTRACT)
+        val tx = coinTransaction(tokenTransfers = listOf(forged, zeroLeg))
+
+        assertThat(contractItems(tx)).isEmpty()
+    }
+
+    @Test
+    fun `forged transfer of another contract placed first does not replace the real token leg`() = runTest {
+        val forged = tokenTransfer(from = WALLET, to = LOOKALIKE, value = "1500000000", token = FAKE_CONTRACT)
+        val realLeg = tokenTransfer(from = WALLET, to = RECIPIENT, value = "25000000", token = CONTRACT)
+        val tx = coinTransaction(tokenTransfers = listOf(forged, realLeg))
+
+        val result = singleContractItem(tx, decimals = 6)
+
+        assertThat(result.amount.value!!.compareTo(BigDecimal("25"))).isEqualTo(0)
+        val destination = result.destinationType as TransactionHistoryItem.DestinationType.Single
+        assertThat(destination.addressType.address).isEqualTo(RECIPIENT)
+    }
+
+    @Test
+    fun `token transfer is matched when contract address comes only in the contract field`() = runTest {
+        val transfer = tokenTransfer(from = WALLET, to = RECIPIENT, value = "1000000", token = null)
+            .copy(contract = CONTRACT)
+        val tx = coinTransaction(tokenTransfers = listOf(transfer))
+
+        val result = singleContractItem(tx, decimals = 6)
+
+        assertThat(result.amount.value!!.compareTo(BigDecimal("1"))).isEqualTo(0)
+    }
+
+    @Test
+    fun `token transfer is matched when contract address comes only in the token field`() = runTest {
+        val transfer = tokenTransfer(from = WALLET, to = RECIPIENT, value = "1000000", token = CONTRACT)
+            .copy(contract = null)
+        val tx = coinTransaction(tokenTransfers = listOf(transfer))
+
         val result = singleContractItem(tx, decimals = 6)
 
         assertThat(result.amount.value!!.compareTo(BigDecimal("1"))).isEqualTo(0)
@@ -1028,6 +1071,22 @@ class TronTransactionHistoryProviderTest {
         return (result as Result.Success).data.items.single()
     }
 
+    private suspend fun contractItems(tx: GetAddressResponse.Transaction): List<TransactionHistoryItem> {
+        val filter = contractFilter()
+        val request = TransactionHistoryRequest(
+            address = WALLET,
+            decimals = 6,
+            page = Page.Initial,
+            pageSize = PAGE_SIZE,
+            filterType = filter,
+        )
+        coEvery {
+            blockBookApi.getTransactions(WALLET, null, PAGE_SIZE, filter)
+        } returns addressResponse(transactions = listOf(tx), page = 1)
+
+        return (provider.getTransactionsHistory(request) as Result.Success).data.items
+    }
+
     private suspend fun singleContractItem(tx: GetAddressResponse.Transaction, decimals: Int): TransactionHistoryItem {
         val filter = contractFilter()
         val request = TransactionHistoryRequest(
@@ -1197,6 +1256,8 @@ class TronTransactionHistoryProviderTest {
         const val RECIPIENT = "TQrY8tryqsYVCYS3MFbtffiPp2ccyn4STm"
         const val VALIDATOR = "TKSXDA8HfE9E1y39RczVQ1ZascUEtaSToF"
         const val CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+        const val FAKE_CONTRACT = "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf"
+        const val LOOKALIKE = "TQrY8tryqsYVCYS3MFbtffiPp2ccyn4STn"
         const val TX_HASH = "abc123deadbeef"
         const val TRANSFER_METHOD_ID = "0xa9059cbb"
         const val TRANSFER_CALL_DATA = "0xa9059cbb000000000000000000000041b945de8e80a32a1bf5aa55038d69a1c" +

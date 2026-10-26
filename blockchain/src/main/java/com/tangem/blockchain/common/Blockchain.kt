@@ -231,6 +231,9 @@ enum class Blockchain(
     ElectroneumTestnet("electroneum/test", "ETN", "Electroneum Testnet"),
     Arc("arc", "USDC", "Arc"),
     ArcTestnet("arc/test", "USDC", "Arc Testnet"),
+    Onyx("onyx", "XCN", "Onyx"),
+    OnyxTestnet("onyx/test", "XCN", "Onyx Testnet"),
+    PublicMasterpiece("public-masterpiece", "PMT", "Public Masterpiece"),
     ;
 
     private val externalLinkProvider: ExternalLinkProvider by lazy { ExternalLinkProviderFactory.makeProvider(this) }
@@ -383,6 +386,8 @@ enum class Blockchain(
         Igra, IgraTestnet,
         Electroneum, ElectroneumTestnet,
         Arc, ArcTestnet,
+        Onyx, OnyxTestnet,
+        PublicMasterpiece,
         -> 18
 
         Near, NearTestnet,
@@ -393,12 +398,15 @@ enum class Blockchain(
      * Number of fraction digits to show for the native coin. Formatting only: never use it to convert a value to or
      * from the chain's smallest unit, that is what [decimals] is for.
      *
-     * Equals [decimals] for every blockchain but Arc and Arc Testnet, whose native coin is USDC: the chain keeps
-     * balances and fees in 18 decimals, but users expect USDC with 6.
+     * Equals [decimals] for every blockchain but:
+     * - Arc and Arc Testnet, whose native coin is USDC: the chain keeps balances and fees in 18 decimals, but users
+     *   expect USDC with 6;
+     * - Onyx and Onyx Testnet, whose native XCN has 8 decimals while the JSON-RPC relay reports amounts in 18.
      */
     @Suppress("MagicNumber")
     fun displayDecimals(): Int = when (this) {
         Arc, ArcTestnet -> 6
+        Onyx, OnyxTestnet -> 8
         else -> decimals()
     }
 
@@ -524,6 +532,8 @@ enum class Blockchain(
             Igra, IgraTestnet,
             Electroneum, ElectroneumTestnet,
             Arc, ArcTestnet,
+            Onyx, OnyxTestnet,
+            PublicMasterpiece,
             -> EthereumAddressService()
 
             Quai, QuaiTestnet -> QuaiAddressService()
@@ -692,6 +702,7 @@ enum class Blockchain(
             Igra, IgraTestnet -> IgraTestnet
             Electroneum, ElectroneumTestnet -> ElectroneumTestnet
             Arc, ArcTestnet -> ArcTestnet
+            Onyx, OnyxTestnet -> OnyxTestnet
             Unknown,
             Cardano,
             Dogecoin,
@@ -719,6 +730,7 @@ enum class Blockchain(
             Clore,
             ArbitrumNova,
             Gonka,
+            PublicMasterpiece,
             -> null
         }
     }
@@ -819,6 +831,8 @@ enum class Blockchain(
             Igra, IgraTestnet,
             Electroneum, ElectroneumTestnet,
             Arc, ArcTestnet,
+            Onyx, OnyxTestnet,
+            PublicMasterpiece,
             -> listOf(EllipticCurve.Secp256k1)
 
             Stellar, StellarTestnet,
@@ -953,6 +967,9 @@ enum class Blockchain(
             ElectroneumTestnet -> Chain.ElectroneumTestnet.id
             Arc -> Chain.Arc.id
             ArcTestnet -> Chain.ArcTestnet.id
+            Onyx -> Chain.Onyx.id
+            OnyxTestnet -> Chain.OnyxTestnet.id
+            PublicMasterpiece -> Chain.PublicMasterpiece.id
             Monad -> Chain.Monad.id
             MonadTestnet -> Chain.MonadTestnet.id
             else -> null
@@ -972,8 +989,8 @@ enum class Blockchain(
     }
 
     fun canHandleTokens(): Boolean {
-        // disable tokens support for Taraxa evm until it's not tested
-        if (this == Taraxa || this == EnergyWebChain) return false
+        // Tokens are not supported: Taraxa EVM is not tested yet, Public Masterpiece has none
+        if (this == Taraxa || this == EnergyWebChain || this == PublicMasterpiece) return false
 
         if (isEvm()) return true
 
@@ -1143,6 +1160,7 @@ enum class Blockchain(
                 Base,
                 BSC,
                 Polygon,
+                Monad,
                 EthereumTestnet,
             )
         }

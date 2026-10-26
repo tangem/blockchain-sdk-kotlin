@@ -198,6 +198,7 @@ dependencies {
 
     implementation(libs.serialization.json)
     implementation(libs.serialization.protobuf)
+    implementation(libs.wire.grpc.client)
 }
 
 // Protobuf
@@ -205,6 +206,7 @@ wire {
     sourcePath {
         srcDir("src/main/java/com/tangem/blockchain/blockchains/tron/proto")
         srcDir("src/main/java/com/tangem/blockchain/blockchains/koinos/proto")
+        srcDir("src/main/java/com/tangem/blockchain/blockchains/sui/proto")
     }
     kotlin {}
 }
