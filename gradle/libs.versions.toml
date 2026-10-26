@@ -134,6 +134,7 @@ coroutines-okhttp = { module = "ru.gildor.coroutines:kotlin-coroutines-okhttp", 
 # Serialization
 serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "kotlinxSerializationProtobuf" }
+wire-grpc-client = { module = "com.squareup.wire:wire-grpc-client", version.ref = "wire" }
 
 # Bitcoin
 bitcoin-bitcoinj = { module = "org.bitcoinj:bitcoinj-core", version.ref = "bitcoinj" }
