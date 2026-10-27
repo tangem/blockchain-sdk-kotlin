@@ -12,6 +12,6 @@ internal class InternetComputerExternalLinkProvider : ExternalLinkProvider {
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Url("${explorerBaseUrl}tokens/tx-hash/$transactionHash")
+        return TxExploreState.Url("${explorerBaseUrl}tokens/tx/$transactionHash")
     }
 }

@@ -24,12 +24,12 @@ internal class InternetComputerExternalLinkProviderTest {
 
     @Test
     fun `generates correct transaction URL`() {
-        val txHash = "e5339a0c4aa822b699f8f70d31ff9d2793a5d0b338d45001ec2cc421fb3503a0"
+        val blockIndex = "27591234"
 
-        val txState = provider.getExplorerTxUrl(txHash)
+        val txState = provider.getExplorerTxUrl(blockIndex)
 
         assertThat(txState).isInstanceOf(TxExploreState.Url::class.java)
         assertThat((txState as TxExploreState.Url).url)
-            .isEqualTo("https://dashboard.internetcomputer.org/tokens/tx-hash/$txHash")
+            .isEqualTo("https://dashboard.internetcomputer.org/tokens/tx/$blockIndex")
     }
 }
