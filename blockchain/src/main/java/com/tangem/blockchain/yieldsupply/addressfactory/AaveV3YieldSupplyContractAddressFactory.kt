@@ -1,6 +1,7 @@
 package com.tangem.blockchain.yieldsupply.addressfactory
 
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.di.DepsContainer
 
 /**
  *  Factory to provide Aave contract addresses for Yield Module based on the blockchain.
@@ -8,6 +9,9 @@ import com.tangem.blockchain.common.Blockchain
 internal class AaveV3YieldSupplyContractAddressFactory(
     private val blockchain: Blockchain,
 ) {
+
+    private val isV3Enabled: Boolean
+        get() = DepsContainer.blockchainFeatureToggles.isYieldModuleV3Enabled
 
     fun getFactoryAddress(): String = when (blockchain) {
         Blockchain.Ethereum -> "0xd8972a45616bEC62cB9687e38a99D763c0879B0d"
@@ -23,6 +27,20 @@ internal class AaveV3YieldSupplyContractAddressFactory(
     }
 
     fun getProcessorAddress(): String = when (blockchain) {
+        Blockchain.Ethereum,
+        Blockchain.Avalanche,
+        Blockchain.Arbitrum,
+        Blockchain.Optimism,
+        Blockchain.Base,
+        Blockchain.BSC,
+        Blockchain.Polygon,
+        -> if (isV3Enabled) V3_PROCESSOR_ADDRESS else getV2ProcessorAddress()
+        Blockchain.Monad -> V3_PROCESSOR_ADDRESS
+        Blockchain.EthereumTestnet -> "0x9A4b70A216C1A84d72a490f8cD3014Fdb538d249"
+        else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
+    }
+
+    private fun getV2ProcessorAddress(): String = when (blockchain) {
         Blockchain.Ethereum -> "0x4fF6178B58a51Cb74E50254ED1e9ebd4F28Eb2C0"
         Blockchain.Avalanche -> "0x1A5Dd8e4Feb0bb4E6765DAd78B83e8bA3fba2dAC"
         Blockchain.Arbitrum -> "0xF22E4A776cca26A003920538E174E3aeA8177d9f"
@@ -30,8 +48,6 @@ internal class AaveV3YieldSupplyContractAddressFactory(
         Blockchain.Base -> "0x487C7bA76BB0611d20A97E89625Ca93c87Ed4AA1"
         Blockchain.BSC -> "0x1A5Dd8e4Feb0bb4E6765DAd78B83e8bA3fba2dAC"
         Blockchain.Polygon -> "0xB04aFaA060097C4a2c9e45FE611BB5db682C9aD6"
-        Blockchain.Monad -> "0xA564bC954DBC4378e4df8B6fA424bc9DAD728529"
-        Blockchain.EthereumTestnet -> "0x9A4b70A216C1A84d72a490f8cD3014Fdb538d249"
         else -> error("${blockchain.fullName} blockchain is not supported by ${this::class.simpleName}")
     }
 
@@ -48,6 +64,19 @@ internal class AaveV3YieldSupplyContractAddressFactory(
     }
 
     fun getLatestImplementationAddress(): String? = when (blockchain) {
+        Blockchain.Ethereum,
+        Blockchain.Avalanche,
+        Blockchain.Arbitrum,
+        Blockchain.Optimism,
+        Blockchain.Base,
+        Blockchain.BSC,
+        Blockchain.Polygon,
+        -> if (isV3Enabled) V3_IMPLEMENTATION_ADDRESS else getV2ImplementationAddress()
+        Blockchain.Monad -> V3_IMPLEMENTATION_ADDRESS
+        else -> null
+    }
+
+    private fun getV2ImplementationAddress(): String = when (blockchain) {
         Blockchain.Ethereum -> "0xa6a6afa45D22aE7a55abC5cbBF426Fc8Dd45b846"
         Blockchain.Avalanche -> "0xe1d0BF13C427C4B2e25Df0CA29E1Faa2d10458f3"
         Blockchain.Arbitrum -> "0xDC8123e7E28D8cC12c3420CF8c8D6eceD9db4c71"
@@ -55,7 +84,12 @@ internal class AaveV3YieldSupplyContractAddressFactory(
         Blockchain.Base -> "0x66cC410eC0Dd4013b7dA0a003404F6c503109093"
         Blockchain.BSC -> "0x6bBB8DDB265A6bae01422fF815a77e72D71F4e17"
         Blockchain.Polygon -> "0x66084220E3dFdd1D8C8F1F868C103F9418DEce7c"
-        Blockchain.Monad -> "0xaaF16358336a5e292b1D70057f99c3f2e8241C63"
-        else -> null
+        else -> error("${blockchain.fullName} blockchain has no V2 implementation")
+    }
+
+    private companion object {
+        // V3 contracts share the same processor and implementation addresses across all mainnets
+        const val V3_PROCESSOR_ADDRESS = "0xA564bC954DBC4378e4df8B6fA424bc9DAD728529"
+        const val V3_IMPLEMENTATION_ADDRESS = "0xaaF16358336a5e292b1D70057f99c3f2e8241C63"
     }
 }

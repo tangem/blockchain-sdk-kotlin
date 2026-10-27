@@ -4,8 +4,12 @@ import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
+import com.tangem.blockchain.blockchains.ethereum.network.EthereumTransactionResponse
 import com.tangem.blockchain.common.Blockchain
+import com.tangem.blockchain.common.BlockchainFeatureToggles
+import com.tangem.blockchain.common.BlockchainSdkConfig
 import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.di.DepsContainer
 import com.tangem.blockchain.common.pagination.Page
 import com.tangem.blockchain.common.pagination.PaginationWrapper
 import com.tangem.blockchain.extensions.Result
@@ -14,6 +18,7 @@ import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.Ethe
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.EtherscanInternalResult
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.EtherscanInternalTransaction
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.EtherscanInternalTransactionsResponse
+import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.EtherscanProxyTransactionResponse
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.PolygonScanResult
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.PolygonTransaction
 import com.tangem.blockchain.transactionhistory.blockchains.polygon.network.PolygonTransactionHistoryResponse
@@ -23,6 +28,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import org.junit.Before
 import org.junit.Test
 import java.math.BigDecimal
 
@@ -39,6 +45,11 @@ class EtherscanTransactionHistoryProviderTest {
         api = api,
         etherscanApiKey = API_KEY,
     )
+
+    @Before
+    fun setUp() {
+        initToggles(isYieldModuleV3Enabled = true)
+    }
 
     @Test
     fun `internal calls of the Safe are merged into its coin history and the relayer call is kept as before`() =
@@ -331,6 +342,153 @@ class EtherscanTransactionHistoryProviderTest {
         }
     }
 
+    @Test
+    fun `a token transfer sent inside a yield module upgrade gets its input by hash once per transaction`() = runTest {
+        val legs = listOf(
+            tokenTransaction(from = AAVE_TOKEN, to = SAFE),
+            tokenTransaction(from = SAFE, to = RECIPIENT),
+        )
+        stubTokenPage(legs)
+        coEvery { api.getTransactionByHash(CHAIN_ID, TX_HASH, API_KEY) } returns proxyResponse(UPGRADE_INPUT)
+
+        val page = loadTokenPage()
+
+        assertThat(page.items.map { it.type }).containsExactly(
+            TransactionHistoryItem.TransactionType.ContractMethod(id = UPGRADE_SELECTOR, callData = UPGRADE_INPUT),
+            TransactionHistoryItem.TransactionType.ContractMethod(id = UPGRADE_SELECTOR, callData = UPGRADE_INPUT),
+        )
+        coVerify(exactly = 1) { api.getTransactionByHash(CHAIN_ID, TX_HASH, API_KEY) }
+    }
+
+    @Test
+    fun `a yield module upgrade whose input fails to load stays in the history untyped`() = runTest {
+        stubTokenPage(listOf(tokenTransaction(from = SAFE, to = RECIPIENT)))
+        coEvery { api.getTransactionByHash(CHAIN_ID, TX_HASH, API_KEY) } throws IllegalStateException("rate limit")
+
+        val page = loadTokenPage()
+
+        assertThat(page.items.map { it.type }).containsExactly(
+            TransactionHistoryItem.TransactionType.ContractMethod(id = UPGRADE_SELECTOR, callData = DEPRECATED_INPUT),
+        )
+    }
+
+    @Test
+    fun `a loaded upgrade input is not asked again on the next load`() = runTest {
+        stubTokenPage(listOf(tokenTransaction(from = SAFE, to = RECIPIENT)))
+        coEvery { api.getTransactionByHash(CHAIN_ID, TX_HASH, API_KEY) } returns proxyResponse(UPGRADE_INPUT)
+        loadTokenPage()
+
+        val page = loadTokenPage()
+
+        assertThat(page.items.map { it.type }).containsExactly(
+            TransactionHistoryItem.TransactionType.ContractMethod(id = UPGRADE_SELECTOR, callData = UPGRADE_INPUT),
+        )
+        coVerify(exactly = 1) { api.getTransactionByHash(CHAIN_ID, TX_HASH, API_KEY) }
+    }
+
+    @Test
+    fun `an upgrade input that failed to load is asked again on the next load`() = runTest {
+        stubTokenPage(listOf(tokenTransaction(from = SAFE, to = RECIPIENT)))
+        coEvery { api.getTransactionByHash(CHAIN_ID, TX_HASH, API_KEY) } throws
+            IllegalStateException("rate limit") andThen proxyResponse(UPGRADE_INPUT)
+        loadTokenPage()
+
+        val page = loadTokenPage()
+
+        assertThat(page.items.map { it.type }).containsExactly(
+            TransactionHistoryItem.TransactionType.ContractMethod(id = UPGRADE_SELECTOR, callData = UPGRADE_INPUT),
+        )
+        coVerify(exactly = 2) { api.getTransactionByHash(CHAIN_ID, TX_HASH, API_KEY) }
+    }
+
+    @Test
+    fun `without the yield module V3 toggle an upgrade input is not asked by hash`() = runTest {
+        initToggles(isYieldModuleV3Enabled = false)
+        stubTokenPage(listOf(tokenTransaction(from = SAFE, to = RECIPIENT)))
+
+        val page = loadTokenPage()
+
+        assertThat(page.items.map { it.type }).containsExactly(
+            TransactionHistoryItem.TransactionType.ContractMethod(id = UPGRADE_SELECTOR, callData = DEPRECATED_INPUT),
+        )
+        coVerify(exactly = 0) { api.getTransactionByHash(any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `a token transfer of any other method is not asked by hash`() = runTest {
+        stubTokenPage(listOf(tokenTransaction(from = SAFE, to = RECIPIENT, methodId = CLAIM_SELECTOR)))
+
+        loadTokenPage()
+
+        coVerify(exactly = 0) { api.getTransactionByHash(any(), any(), any(), any(), any()) }
+    }
+
+    private fun initToggles(isYieldModuleV3Enabled: Boolean) {
+        DepsContainer.onInit(
+            config = mockk<BlockchainSdkConfig>(relaxed = true),
+            featureToggles = BlockchainFeatureToggles(
+                isYieldSupplyEnabled = true,
+                isYieldModuleV3Enabled = isYieldModuleV3Enabled,
+            ),
+        )
+    }
+
+    private fun stubTokenPage(txs: List<PolygonTransaction>) {
+        coEvery {
+            api.getTokenTransactionHistory(
+                chainId = CHAIN_ID,
+                address = SAFE,
+                page = 1,
+                offset = PAGE_SIZE,
+                apiKey = API_KEY,
+                contractAddress = NATIVE_USDC_TOKEN.contractAddress,
+            )
+        } returns txsResponse(txs)
+    }
+
+    private suspend fun loadTokenPage(): PaginationWrapper<TransactionHistoryItem> {
+        val request = request(Page.Initial, shouldIncludeInternalTransfers = false)
+            .copy(filterType = TransactionHistoryRequest.FilterType.Contract(NATIVE_USDC_TOKEN))
+        return (provider.getTransactionsHistory(request) as Result.Success).data
+    }
+
+    private fun tokenTransaction(from: String, to: String, methodId: String = UPGRADE_SELECTOR) = PolygonTransaction(
+        confirmations = "12",
+        contractAddress = NATIVE_USDC_TOKEN.contractAddress,
+        from = from,
+        functionName = "upgradeToAndCall(address newImplementation, bytes data)",
+        methodId = methodId,
+        gasPrice = "2",
+        gasUsed = "3",
+        hash = TX_HASH,
+        isError = null,
+        timeStamp = TIMESTAMP,
+        to = to,
+        txReceiptStatus = null,
+        value = "500000",
+        input = DEPRECATED_INPUT,
+        blockNumber = "1",
+    )
+
+    private fun proxyResponse(input: String) = EtherscanProxyTransactionResponse(
+        result = EthereumTransactionResponse(
+            blockHash = null,
+            blockNumber = "0x1",
+            from = SAFE,
+            gas = "0x1",
+            gasPrice = null,
+            hash = TX_HASH,
+            input = input,
+            nonce = "0x1",
+            to = CONTRACT,
+            transactionIndex = null,
+            value = "0x0",
+            v = null,
+            r = null,
+            s = null,
+        ),
+    )
+
     private fun stubCoinPage(chainId: Int, txs: List<PolygonTransaction>) {
         coEvery { api.getCoinTransactionHistory(chainId, SAFE, 1, PAGE_SIZE, API_KEY) } returns txsResponse(txs)
     }
@@ -534,6 +692,16 @@ class EtherscanTransactionHistoryProviderTest {
         val MONAD_CHAIN_ID = requireNotNull(Blockchain.Monad.getChainId())
         const val TX_HASH = "0x55233c9ef541232c1a94f8b0806401e4e5188930ff0c795ffa51e96a92e53da0"
         const val TIMESTAMP = "1790025057"
+        const val UPGRADE_SELECTOR = "0x4f1ef286"
+        const val UPGRADE_INPUT = "0x4f1ef2860000"
+        const val DEPRECATED_INPUT = "deprecated"
+        const val AAVE_TOKEN = "0xa4d94019934d8333ef880abffbf2fdd611c762bd"
+        val NATIVE_USDC_TOKEN = Token(
+            name = "USD Coin",
+            symbol = "USDC",
+            contractAddress = "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+            decimals = 6,
+        )
         const val USDC = "0x3355df6d4c9c3035724fd0e3914de96a5a83aaf4"
         const val FOREIGN_TOKEN = "0x5d0d7bca050e2e98fd4a5e8d3ba823b49f39868d"
         const val USDC_TX_HASH = "0x1dc19f03052e252d05610b4744b103cb8bc23912908ee6ff85071cd166c2614d"

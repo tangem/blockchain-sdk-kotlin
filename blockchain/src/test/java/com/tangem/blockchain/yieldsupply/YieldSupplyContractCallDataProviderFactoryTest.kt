@@ -51,14 +51,11 @@ internal class YieldSupplyContractCallDataProviderFactoryTest {
             originalCallData = originalCallData,
         )
 
-        // Must be an upgradeToAndCall wrapper. Verify via the public byte output (private fields
-        // are not accessible): selector + encoded latest impl address + embedded original data.
-        // Anything else would route the swap to the wrong proxy or skip the upgrade entirely.
         assertThat(result).isInstanceOf(EthereumYieldSupplyUpgradeToAndCallCallData::class.java)
-        val wrappedHex = result.data.toHexString().lowercase()
-        assertThat(wrappedHex).startsWith(UPGRADE_TO_AND_CALL_SELECTOR)
-        assertThat(wrappedHex).contains(latestImpl.removePrefix("0x").lowercase())
-        assertThat(wrappedHex).contains(originalCallData.data.toHexString().lowercase())
+        val wrapped = result as EthereumYieldSupplyUpgradeToAndCallCallData
+        assertThat(wrapped.newImplementation).isEqualTo(latestImpl)
+        assertThat(wrapped.innerCallData).isSameInstanceAs(originalCallData)
+        assertThat(wrapped.data.toHexString().lowercase()).startsWith(UPGRADE_TO_AND_CALL_SELECTOR)
     }
 
     @Test
@@ -86,6 +83,65 @@ internal class YieldSupplyContractCallDataProviderFactoryTest {
         }
 
         assertThat(exception.reason).isEqualTo("rpc down")
+    }
+
+    @Test
+    fun `wrapWithUpgradeIfAvailable wraps call data when module has UpgradeAvailable`() {
+        val latestImpl = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        val result = YieldSupplyContractCallDataProviderFactory.wrapWithUpgradeIfAvailable(
+            versionStatus = YieldModuleVersionStatus.UpgradeAvailable(
+                currentImplementation = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                latestImplementation = latestImpl,
+            ),
+            originalCallData = originalCallData,
+        )
+
+        assertThat(result).isInstanceOf(EthereumYieldSupplyUpgradeToAndCallCallData::class.java)
+        val wrapped = result as EthereumYieldSupplyUpgradeToAndCallCallData
+        assertThat(wrapped.newImplementation).isEqualTo(latestImpl)
+        assertThat(wrapped.innerCallData).isSameInstanceAs(originalCallData)
+    }
+
+    @Test
+    fun `wrapWithUpgradeIfAvailable returns original call data for UpToDate`() {
+        val result = YieldSupplyContractCallDataProviderFactory.wrapWithUpgradeIfAvailable(
+            versionStatus = YieldModuleVersionStatus.UpToDate,
+            originalCallData = originalCallData,
+        )
+
+        assertThat(result).isSameInstanceAs(originalCallData)
+    }
+
+    @Test
+    fun `wrapWithUpgradeIfAvailable returns original call data for NotDeployed`() {
+        val result = YieldSupplyContractCallDataProviderFactory.wrapWithUpgradeIfAvailable(
+            versionStatus = YieldModuleVersionStatus.NotDeployed,
+            originalCallData = originalCallData,
+        )
+
+        assertThat(result).isSameInstanceAs(originalCallData)
+    }
+
+    @Test
+    fun `wrapWithUpgradeIfAvailable returns original call data for UpgradeUnavailable`() {
+        val result = YieldSupplyContractCallDataProviderFactory.wrapWithUpgradeIfAvailable(
+            versionStatus = YieldModuleVersionStatus.UpgradeUnavailable(
+                currentImplementation = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            ),
+            originalCallData = originalCallData,
+        )
+
+        assertThat(result).isSameInstanceAs(originalCallData)
+    }
+
+    @Test
+    fun `wrapWithUpgradeIfAvailable returns original call data for Indeterminate`() {
+        val result = YieldSupplyContractCallDataProviderFactory.wrapWithUpgradeIfAvailable(
+            versionStatus = YieldModuleVersionStatus.Indeterminate(reason = "rpc down"),
+            originalCallData = originalCallData,
+        )
+
+        assertThat(result).isSameInstanceAs(originalCallData)
     }
 
     @Test

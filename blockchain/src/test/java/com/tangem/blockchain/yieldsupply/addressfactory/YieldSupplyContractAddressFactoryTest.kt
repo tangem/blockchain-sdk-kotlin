@@ -69,13 +69,85 @@ internal class YieldSupplyContractAddressFactoryTest {
         assertThat(YieldSupplyContractAddressFactory(Blockchain.Monad).isSupported()).isFalse()
     }
 
-    private fun initToggles(isMonadEnabled: Boolean) {
+    @Test
+    fun `mainnets resolve V3 processor and implementation while the V3 toggle is on`() {
+        initToggles(isMonadEnabled = true, isYieldModuleV3Enabled = true)
+
+        V3_GATED_BLOCKCHAINS.forEach { blockchain ->
+            val addresses = YieldSupplyContractAddressFactory(blockchain).getYieldSupplyContractAddresses()
+
+            assertThat(addresses.processorContractAddress).isEqualTo(V3_PROCESSOR_ADDRESS)
+            assertThat(addresses.latestImplementationAddress).isEqualTo(V3_IMPLEMENTATION_ADDRESS)
+        }
+    }
+
+    @Test
+    fun `mainnets keep V2 processor and implementation while the V3 toggle is off`() {
+        V3_GATED_BLOCKCHAINS.forEach { blockchain ->
+            val addresses = YieldSupplyContractAddressFactory(blockchain).getYieldSupplyContractAddresses()
+
+            assertThat(addresses.processorContractAddress).isNotEqualTo(V3_PROCESSOR_ADDRESS)
+            assertThat(addresses.latestImplementationAddress).isNotEqualTo(V3_IMPLEMENTATION_ADDRESS)
+        }
+    }
+
+    @Test
+    fun `Ethereum resolves the Aave V3 addresses of its V3 deployment`() {
+        initToggles(isMonadEnabled = true, isYieldModuleV3Enabled = true)
+
+        val addresses = YieldSupplyContractAddressFactory(Blockchain.Ethereum).getYieldSupplyContractAddresses()
+
+        assertThat(addresses).isEqualTo(
+            YieldSupplyContractAddresses(
+                factoryContractAddress = "0xd8972a45616bEC62cB9687e38a99D763c0879B0d",
+                processorContractAddress = V3_PROCESSOR_ADDRESS,
+                swapExecutionRegistryAddress = "0xF9d772c558743749C91B1A76aA708ae61BC4716c",
+                latestImplementationAddress = V3_IMPLEMENTATION_ADDRESS,
+                providerType = YieldSupplyProviderType.AaveV3,
+            ),
+        )
+    }
+
+    @Test
+    fun `factory and swap registry do not depend on the V3 toggle`() {
+        val v2Addresses = V3_GATED_BLOCKCHAINS.associateWith {
+            YieldSupplyContractAddressFactory(it).getYieldSupplyContractAddresses()
+        }
+
+        initToggles(isMonadEnabled = true, isYieldModuleV3Enabled = true)
+
+        V3_GATED_BLOCKCHAINS.forEach { blockchain ->
+            val v3Addresses = YieldSupplyContractAddressFactory(blockchain).getYieldSupplyContractAddresses()
+            val v2 = v2Addresses.getValue(blockchain)
+
+            assertThat(v3Addresses.factoryContractAddress).isEqualTo(v2.factoryContractAddress)
+            assertThat(v3Addresses.swapExecutionRegistryAddress).isEqualTo(v2.swapExecutionRegistryAddress)
+        }
+    }
+
+    private fun initToggles(isMonadEnabled: Boolean, isYieldModuleV3Enabled: Boolean = false) {
         DepsContainer.onInit(
             config = mockk<BlockchainSdkConfig>(relaxed = true),
             featureToggles = BlockchainFeatureToggles(
                 isYieldSupplyEnabled = true,
                 isMonadEnabled = isMonadEnabled,
+                isYieldModuleV3Enabled = isYieldModuleV3Enabled,
             ),
+        )
+    }
+
+    private companion object {
+        const val V3_PROCESSOR_ADDRESS = "0xA564bC954DBC4378e4df8B6fA424bc9DAD728529"
+        const val V3_IMPLEMENTATION_ADDRESS = "0xaaF16358336a5e292b1D70057f99c3f2e8241C63"
+
+        val V3_GATED_BLOCKCHAINS = listOf(
+            Blockchain.Ethereum,
+            Blockchain.Avalanche,
+            Blockchain.Arbitrum,
+            Blockchain.Optimism,
+            Blockchain.Base,
+            Blockchain.BSC,
+            Blockchain.Polygon,
         )
     }
 }

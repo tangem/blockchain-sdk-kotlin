@@ -110,7 +110,7 @@ object YieldSupplyContractCallDataProviderFactory {
         -> originalCallData
         is YieldModuleVersionStatus.UpgradeAvailable -> EthereumYieldSupplyUpgradeToAndCallCallData(
             newImplementation = versionStatus.latestImplementation,
-            callData = originalCallData.data,
+            innerCallData = originalCallData,
         )
         is YieldModuleVersionStatus.UpgradeUnavailable -> throw YieldModuleUpgradeUnavailableException(
             currentImplementation = versionStatus.currentImplementation,
@@ -118,6 +118,25 @@ object YieldSupplyContractCallDataProviderFactory {
         is YieldModuleVersionStatus.Indeterminate -> throw YieldModuleVersionIndeterminateException(
             reason = versionStatus.reason,
         )
+    }
+
+    /**
+     * Like [wrapWithUpgradeIfNeeded] but never throws: wraps only when an upgrade is available,
+     * otherwise returns [originalCallData] as is.
+     */
+    fun wrapWithUpgradeIfAvailable(
+        versionStatus: YieldModuleVersionStatus,
+        originalCallData: SmartContractCallData,
+    ): SmartContractCallData = when (versionStatus) {
+        is YieldModuleVersionStatus.UpgradeAvailable -> EthereumYieldSupplyUpgradeToAndCallCallData(
+            newImplementation = versionStatus.latestImplementation,
+            innerCallData = originalCallData,
+        )
+        is YieldModuleVersionStatus.UpToDate,
+        is YieldModuleVersionStatus.NotDeployed,
+        is YieldModuleVersionStatus.UpgradeUnavailable,
+        is YieldModuleVersionStatus.Indeterminate,
+        -> originalCallData
     }
 
     /**
