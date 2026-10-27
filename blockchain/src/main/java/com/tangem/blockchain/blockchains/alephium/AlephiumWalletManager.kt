@@ -24,13 +24,19 @@ internal class AlephiumWalletManager(
     private val transactionBuilder: AlephiumTransactionBuilder,
 ) : WalletManager(wallet),
     UtxoAmountLimitProvider,
-    UtxoBlockchainManager {
+    UtxoBlockchainManager,
+    IncompleteBalanceProvider {
 
     override val currentHost: String get() = networkService.baseUrl
 
     override val dustValue: BigDecimal = dustUtxoAmount.v.toBigDecimal().movePointLeft(wallet.blockchain.decimals())
 
     override val allowConsolidation: Boolean = true
+
+    override val unspentsLimit: Int = MAX_NODE_UTXOS_COUNT
+
+    override var isBalanceIncomplete: Boolean = false
+        private set
 
     override suspend fun updateInternal() {
         val info = networkService.getInfo(wallet.address).successOr { return }
@@ -47,6 +53,7 @@ internal class AlephiumWalletManager(
             }
             .movePointLeft(wallet.blockchain.decimals())
         transactionBuilder.updateUnspentOutputs(info)
+        isBalanceIncomplete = info.utxos.size >= unspentsLimit
         if (!hasUnconfirmed) wallet.recentTransactions.forEach { it.status = TransactionStatus.Confirmed }
         wallet.setCoinValue(amount)
     }
@@ -196,5 +203,7 @@ internal class AlephiumWalletManager(
         private const val BASE_GAS = 1000L
         private const val P2PK_UNLOCK_GAS = 2060L
         private const val MINIMAL_GAS = 20000L
+
+        private const val MAX_NODE_UTXOS_COUNT = 5000
     }
 }
