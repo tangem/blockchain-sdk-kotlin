@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.sui
 
 import com.tangem.blockchain.blockchains.sui.model.SuiWalletInfo
+import com.tangem.blockchain.blockchains.sui.network.SuiConstants
 import com.tangem.blockchain.blockchains.sui.network.SuiNetworkService
 import com.tangem.blockchain.blockchains.sui.network.grpc.SuiGrpcProvider
 import com.tangem.blockchain.common.*
@@ -9,6 +10,7 @@ import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.blockchain.common.transaction.TransactionFee
 import com.tangem.blockchain.common.transaction.TransactionSendResult
 import com.tangem.blockchain.extensions.Result
+import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.extensions.successOr
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -27,6 +29,7 @@ internal class SuiWalletManager(
     private val txBuilder = SuiTransactionBuilder(
         walletAddress = wallet.address,
         publicKey = wallet.publicKey,
+        blockchain = wallet.blockchain,
     )
 
     override val currentHost: String get() = networkService.host
@@ -63,6 +66,7 @@ internal class SuiWalletManager(
             txData = transactionData,
             txSigner = signer,
             onSigned = onSigned,
+            getEpoch = { networkService.getEpoch().map { it.epoch } },
         )
             .successOr { return it }
 
@@ -88,10 +92,15 @@ internal class SuiWalletManager(
 
     override suspend fun getFee(amount: Amount, destination: String): Result<TransactionFee> {
         val info = walletInfo ?: return Result.Failure(BlockchainSdkError.FailedToLoadFee)
-        val gasPrice = networkService.getReferenceGasPrice()
+        val epoch = networkService.getEpoch()
             .successOr { return it }
-        val transactionBytes = txBuilder.buildForDryRun(info, amount, destination, gasPrice)
-            .successOr { return it }
+        val transactionBytes = txBuilder.buildForDryRun(
+            walletInfo = info,
+            amount = amount,
+            destination = destination,
+            gasPrice = epoch.referenceGasPrice,
+            epoch = epoch.epoch,
+        ).successOr { return it }
         val dryRunResult = networkService.dryRunTransaction(transactionBytes)
             .successOr { return it }
 
@@ -115,19 +124,20 @@ internal class SuiWalletManager(
     }
 
     private suspend fun updateWallet(info: SuiWalletInfo) {
+        // We may receive trimmed contract address. In that case we need to fill it with heading zeros
+        fun String.fixed(): String = addressService.reformatContractAddress(this) ?: this
+
         val infoWithFixedAddresses = info.copy(
-            coins = info.coins.map { coin ->
-                // We may receive trimmed contract address. In that case we need to fill it with heading zeros
-                coin.copy(coinType = addressService.reformatContractAddress(coin.coinType) ?: coin.coinType)
-            },
+            coins = info.coins.map { coin -> coin.copy(coinType = coin.coinType.fixed()) },
+            mistAddressBalances = info.mistAddressBalances.mapKeys { (coinType, _) -> coinType.fixed() },
         )
         walletInfo = infoWithFixedAddresses
 
-        wallet.setAmount(Amount(infoWithFixedAddresses.suiTotalBalance, wallet.blockchain))
+        val suiBalance = infoWithFixedAddresses.mistBalanceOf(SuiConstants.COIN_TYPE)
+            .movePointLeft(wallet.blockchain.decimals())
+        wallet.setAmount(Amount(suiBalance, wallet.blockchain))
         cardTokens.forEach { token ->
-            val tokenBalance = infoWithFixedAddresses.coins
-                .filter { it.coinType == token.contractAddress }
-                .sumOf { it.mistBalance }
+            val tokenBalance = infoWithFixedAddresses.mistBalanceOf(token.contractAddress)
                 .movePointLeft(token.decimals)
             wallet.addTokenValue(tokenBalance, token)
         }

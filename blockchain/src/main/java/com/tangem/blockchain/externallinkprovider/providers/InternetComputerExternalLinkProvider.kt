@@ -8,10 +8,10 @@ internal class InternetComputerExternalLinkProvider : ExternalLinkProvider {
     override val explorerBaseUrl: String = "https://dashboard.internetcomputer.org/"
 
     override fun explorerUrl(walletAddress: String, contractAddress: String?): String {
-        return "$explorerBaseUrl/account/$walletAddress"
+        return "${explorerBaseUrl}tokens/account/$walletAddress"
     }
 
     override fun getExplorerTxUrl(transactionHash: String): TxExploreState {
-        return TxExploreState.Url("$explorerBaseUrl/transaction/$transactionHash")
+        return TxExploreState.Url("${explorerBaseUrl}tokens/tx/$transactionHash")
     }
 }

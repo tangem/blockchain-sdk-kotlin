@@ -23,6 +23,7 @@ service LedgerService {
 
 service StateService {
   rpc ListOwnedObjects(ListOwnedObjectsRequest) returns (ListOwnedObjectsResponse);
+  rpc ListBalances(ListBalancesRequest) returns (ListBalancesResponse);
 }
 
 service TransactionExecutionService {
@@ -59,6 +60,23 @@ message ListOwnedObjectsRequest {
 message ListOwnedObjectsResponse {
   repeated Object objects = 1;
   optional bytes next_page_token = 2;
+}
+
+message ListBalancesRequest {
+  optional string owner = 1;
+  optional uint32 page_size = 2;
+  optional bytes page_token = 3;
+}
+
+message ListBalancesResponse {
+  repeated Balance balances = 1;
+  optional bytes next_page_token = 2;
+}
+
+// Funds of `coin_type` held in the address balance introduced by SIP-58, apart from `Coin<T>` objects
+message Balance {
+  optional string coin_type = 1;
+  optional uint64 address_balance = 4;
 }
 
 message ExecuteTransactionRequest {
