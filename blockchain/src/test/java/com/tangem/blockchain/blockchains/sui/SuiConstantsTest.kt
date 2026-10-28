@@ -29,4 +29,18 @@ class SuiConstantsTest {
 
         Truth.assertThat(SuiConstants.coinTypeOf(objectType)).isEqualTo(lpType)
     }
+
+    @Test
+    fun `GIVEN padded native coin type from balances WHEN normalizeCoinType THEN returns short SUI coin type`() {
+        val coinType = "0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI"
+
+        Truth.assertThat(SuiConstants.normalizeCoinType(coinType)).isEqualTo(SuiConstants.COIN_TYPE)
+    }
+
+    @Test
+    fun `GIVEN token coin type from balances WHEN normalizeCoinType THEN returns it as is`() {
+        val tokenType = "0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC"
+
+        Truth.assertThat(SuiConstants.normalizeCoinType(tokenType)).isEqualTo(tokenType)
+    }
 }
