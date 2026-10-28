@@ -16,4 +16,5 @@ class BlockchainFeatureToggles(
     val isStateOverrideGasEstimateEnabled: Boolean = false,
     val isMonadEnabled: Boolean = false,
     val isYieldModuleV3Enabled: Boolean = false,
+    val isSolanaCoreNftEnabled: Boolean = false,
 )

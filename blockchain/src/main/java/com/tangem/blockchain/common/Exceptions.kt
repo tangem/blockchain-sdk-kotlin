@@ -107,6 +107,20 @@ sealed class BlockchainSdkError(
             Solana(17, "Transaction already carries a signature, replacing the blockhash would invalidate it")
         data object ProgramIdOutsideStaticKeys :
             Solana(18, "Instruction program id is not among the static account keys")
+
+        data object NFTUnsupportedAsset : Solana(19, "NFT of this kind can not be transferred")
+
+        data object NFTNotOwner : Solana(20, "NFT is not owned by the wallet")
+
+        data object NFTFrozen : Solana(21, "NFT is frozen")
+
+        data object NFTLocked : Solana(22, "NFT is locked or listed")
+
+        data object NFTInvalidDestination : Solana(23, "Invalid NFT recipient")
+
+        data object NFTInvalidCollection : Solana(24, "Invalid NFT collection")
+
+        data object NFTTransferRejected : Solana(25, "The NFT's rules don't allow this transfer")
     }
 
     sealed class Polkadot(
