@@ -8,6 +8,7 @@ import com.tangem.blockchain.blockchains.tron.tokenmethods.TronTransferTokenCall
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.Token
+import com.tangem.blockchain.common.TransactionData
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.toHexString
 import okio.ByteString.Companion.decodeHex
@@ -109,5 +110,52 @@ class TronWebSignedTransactionTest {
 
         // Assert
         assertThat(result.exceptionOrNull()).isInstanceOf(IllegalArgumentException::class.java)
+    }
+
+    @Test
+    fun `GIVEN contract call with native value WHEN buildSignedTronWebJson THEN throws IllegalArgumentException`() {
+        // Arrange
+        val raw = builder.buildForSign(
+            transaction = routerCall(callValueTrx = BigDecimal.ONE, memo = null),
+            block = tronBlock,
+        )
+
+        // Act
+        val result = runCatching { builder.buildSignedTronWebJson(raw, ByteArray(0)) }
+
+        // Assert
+        assertThat(result.exceptionOrNull()).isInstanceOf(IllegalArgumentException::class.java)
+    }
+
+    @Test
+    fun `GIVEN contract call with memo WHEN buildSignedTronWebJson THEN throws IllegalArgumentException`() {
+        // Arrange
+        val raw = builder.buildForSign(
+            transaction = routerCall(callValueTrx = BigDecimal.ZERO, memo = "swap:memo".toByteArray()),
+            block = tronBlock,
+        )
+
+        // Act
+        val result = runCatching { builder.buildSignedTronWebJson(raw, ByteArray(0)) }
+
+        // Assert
+        assertThat(result.exceptionOrNull()).isInstanceOf(IllegalArgumentException::class.java)
+    }
+
+    private fun routerCall(callValueTrx: BigDecimal, memo: ByteArray?): TransactionData.Uncompiled {
+        val usdtAmount = Amount(token = usdt, value = BigDecimal.ONE)
+        return TransactionData.Uncompiled(
+            amount = Amount(callValueTrx, blockchain),
+            fee = null,
+            sourceAddress = "TU1BRXbr6EmKmrLL4Kymv7Wp18eYFkRfAF",
+            destinationAddress = "TU3ymitEKCWQFtASkEeHaPb8NfZcJtCHLt",
+            extras = TronTransactionExtras(
+                callData = TronTransferTokenCallData(
+                    destination = "TXXxc9NsHndfQ2z9kMKyWpYa5T3QbhKGwn",
+                    amount = usdtAmount,
+                ),
+                memo = memo,
+            ),
+        )
     }
 }

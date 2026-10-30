@@ -70,7 +70,7 @@ internal class YieldSupplyProviderFactoryTest {
     }
 
     @Test
-    fun `returns DefaultYieldSupplyProvider for Monad when isMonadYieldSupplyEnabled is false`() {
+    fun `returns DefaultYieldSupplyProvider for Monad when isMonadEnabled is false`() {
         val factory = YieldSupplyProviderFactory(dataStorage)
 
         every { wallet.blockchain } returns Blockchain.Monad
@@ -87,14 +87,14 @@ internal class YieldSupplyProviderFactoryTest {
     }
 
     @Test
-    fun `returns EthereumYieldSupplyProvider for Monad when isMonadYieldSupplyEnabled is true`() {
+    fun `returns EthereumYieldSupplyProvider for Monad when isMonadEnabled is true`() {
         val factory = YieldSupplyProviderFactory(dataStorage)
 
         every { wallet.blockchain } returns Blockchain.Monad
 
         DepsContainer.onInit(
             config = mockk<BlockchainSdkConfig>(relaxed = true),
-            featureToggles = BlockchainFeatureToggles(isYieldSupplyEnabled = true, isMonadYieldSupplyEnabled = true),
+            featureToggles = BlockchainFeatureToggles(isYieldSupplyEnabled = true, isMonadEnabled = true),
         )
 
         val provider = factory.makeProvider(wallet, networkProvider)

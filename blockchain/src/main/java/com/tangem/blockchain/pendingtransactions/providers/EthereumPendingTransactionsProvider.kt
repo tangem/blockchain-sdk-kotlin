@@ -7,7 +7,6 @@ import com.tangem.blockchain.common.datastorage.PendingTransaction
 import com.tangem.blockchain.common.logging.Logger
 import com.tangem.blockchain.common.network.providers.ProviderType
 import com.tangem.blockchain.extensions.Result
-import com.tangem.blockchain.extensions.map
 import com.tangem.blockchain.network.MultiNetworkProvider
 import com.tangem.blockchain.network.moshi
 import com.tangem.blockchain.pendingtransactions.PendingTransactionStatus
@@ -38,6 +37,16 @@ internal class EthereumPendingTransactionsProvider(
     }
     private val networkProviderMapper = NetworkProviderMapper()
 
+    private val blinkStorageKey = networkProviderMapper.toStorageKey(ProviderType.Blink)
+
+    private val publicMempoolProvider: MultiNetworkProvider<EthereumJsonRpcProvider>? by lazy {
+        val blinkProviders = networkProviderMap.filterKeys { it is ProviderType.Blink }.values
+        multiJsonRpcProvider.providers
+            .filterNot { provider -> blinkProviders.any { it === provider } }
+            .takeIf { it.isNotEmpty() }
+            ?.let { MultiNetworkProvider(providers = it, blockchain = wallet.blockchain) }
+    }
+
     override suspend fun addPendingTransaction(
         transactionId: String,
         networkProvider: NetworkProvider,
@@ -48,7 +57,9 @@ internal class EthereumPendingTransactionsProvider(
         val providerType = networkProviderMap.entries.firstOrNull {
             it.value.baseUrl == networkProvider.baseUrl
         }?.key
-        val providerName = providerType?.let { networkProviderMapper.toStorageKey(it) }
+        val providerName = providerType
+            ?.takeIf { it is ProviderType.Blink }
+            ?.let { networkProviderMapper.toStorageKey(it) }
         Logger.logTransaction("$LOG_TAG addPendingTransaction: providerName=$providerName")
         storage.addTransaction(transactionId, providerName, transactionData)
     }
@@ -58,12 +69,7 @@ internal class EthereumPendingTransactionsProvider(
         Logger.logTransaction(
             "$LOG_TAG addPendingGaslessTransaction: txId=$transactionId, contractAddress=$contractAddress",
         )
-        val provider = networkProviderMap.entries
-            .firstOrNull {
-                it.key is ProviderType.Public
-            } ?: networkProviderMap.entries.firstOrNull { it.key !is ProviderType.Blink }
-        val providerName = provider?.key?.let { networkProviderMapper.toStorageKey(it) }
-        storage.addTransaction(transactionId, providerName, transactionData)
+        storage.addTransaction(transactionId, providerName = null, transactionData)
     }
 
     override suspend fun removePendingTransaction(transactionId: String) {
@@ -114,14 +120,20 @@ internal class EthereumPendingTransactionsProvider(
 
     private suspend fun checkTransactionStatus(pendingTransaction: PendingTransaction): PendingTransactionStatus {
         Logger.logTransaction("$LOG_TAG checkTransactionStatus: txId=${pendingTransaction.transactionId}")
-        val specificProvider = getProviderForTransaction(pendingTransaction)
+        val blinkProvider = getPinnedBlinkProvider(pendingTransaction)
 
-        return checkTransactionStatusWithProvider(pendingTransaction, specificProvider)
+        return if (blinkProvider != null) {
+            checkTransactionStatusWithProvider(pendingTransaction, blinkProvider, isPinnedToBlink = true)
+        } else {
+            val provider = publicMempoolProvider ?: multiJsonRpcProvider
+            checkTransactionStatusWithProvider(pendingTransaction, provider, isPinnedToBlink = false)
+        }
     }
 
     private suspend fun checkTransactionStatusWithProvider(
         pendingTransaction: PendingTransaction,
         provider: MultiNetworkProvider<EthereumJsonRpcProvider>,
+        isPinnedToBlink: Boolean,
     ): PendingTransactionStatus {
         Logger.logTransaction(
             "$LOG_TAG checkTransactionStatusWithProvider: txId=${pendingTransaction.transactionId}",
@@ -136,42 +148,36 @@ internal class EthereumPendingTransactionsProvider(
                 }
             }
             is Result.Failure -> {
-                handleFailureResult(pendingTransaction, provider)
+                handleFailureResult(pendingTransaction, isPinnedToBlink, result.error)
             }
         }
     }
 
     private suspend fun handleFailureResult(
         pendingTransaction: PendingTransaction,
-        usedProvider: MultiNetworkProvider<EthereumJsonRpcProvider>,
+        isPinnedToBlink: Boolean,
+        error: BlockchainError,
     ): PendingTransactionStatus {
-        val isPrivateProvider = pendingTransaction.providerName != null &&
-            networkProviderMapper.isPrivateProvider(pendingTransaction.providerName)
+        Logger.logTransaction(
+            "$LOG_TAG handleFailureResult: tx=${pendingTransaction.transactionId}, " +
+                "provider=${pendingTransaction.providerName}, error=${error.customMessage}",
+        )
 
-        if (isPrivateProvider && usedProvider !== multiJsonRpcProvider) {
-            Logger.logTransaction(
-                "$LOG_TAG handleFailureResult: specific provider failed, " +
-                    "trying fallback for tx=${pendingTransaction.transactionId}",
-            )
-            return checkTransactionStatusWithFallback(pendingTransaction)
-        }
-
-        if (isPrivateProvider) {
-            val timeSinceSent = System.currentTimeMillis() - pendingTransaction.sentAt
-            return if (timeSinceSent > PRIVATE_MEMPOOL_TIMEOUT_MS) {
+        return when {
+            isPinnedToBlink -> {
                 Logger.logTransaction(
-                    "$LOG_TAG handleFailureResult: timeout exceeded for tx=${pendingTransaction.transactionId}",
+                    "$LOG_TAG handleFailureResult: Blink failed, " +
+                        "trying fallback for tx=${pendingTransaction.transactionId}",
                 )
-                PendingTransactionStatus.Dropped
-            } else {
-                Logger.logTransaction(
-                    "$LOG_TAG handleFailureResult: still within timeout for tx=${pendingTransaction.transactionId}",
-                )
-                PendingTransactionStatus.Pending
+                checkTransactionStatusWithFallback(pendingTransaction)
             }
+            isBlinkTransaction(pendingTransaction) -> getStatusByTimer(pendingTransaction)
+            else -> PendingTransactionStatus.Pending
         }
+    }
 
-        return PendingTransactionStatus.Pending
+    private fun isBlinkTransaction(pendingTransaction: PendingTransaction): Boolean {
+        return pendingTransaction.providerName == blinkStorageKey
     }
 
     private suspend fun checkTransactionStatusWithFallback(
@@ -239,42 +245,45 @@ internal class EthereumPendingTransactionsProvider(
                 data = transactionHash,
             )
 
-            response.map { jsonRpcResponse: JsonRPCResponse ->
-                val result = jsonRpcResponse.result
-                when {
-                    result == null -> null
-                    else -> runCatching {
-                        transactionResponseAdapter.fromJsonValue(result)
-                    }.getOrNull()
-                }
+            when (response) {
+                is Result.Success -> response.data.toTransactionResponse()
+                is Result.Failure -> response
             }
         } catch (e: Exception) {
             Result.Failure(e.toBlockchainSdkError())
         }
     }
 
-    private fun getProviderForTransaction(
+    /**
+     * A JSON-RPC error or an unparsable body is a failure, not an empty answer: only `"result": null` means
+     * the node does not know the transaction.
+     */
+    private fun JsonRPCResponse.toTransactionResponse(): Result<EthereumTransactionResponse?> {
+        val rpcError = error
+        val rawResult = result
+        return when {
+            rpcError != null -> Result.Failure(
+                BlockchainSdkError.CustomError("JSON-RPC error ${rpcError.code}: ${rpcError.message}"),
+            )
+            rawResult == null -> Result.Success(null)
+            else -> runCatching { transactionResponseAdapter.fromJsonValue(rawResult) }.fold(
+                onSuccess = { Result.Success(it) },
+                onFailure = { Result.Failure(BlockchainSdkError.WrappedThrowable(it)) },
+            )
+        }
+    }
+
+    private fun getPinnedBlinkProvider(
         pendingTransaction: PendingTransaction,
-    ): MultiNetworkProvider<EthereumJsonRpcProvider> {
+    ): MultiNetworkProvider<EthereumJsonRpcProvider>? {
         Logger.logTransaction(
-            "$LOG_TAG getProviderForTransaction: txId=${pendingTransaction.transactionId}," +
+            "$LOG_TAG getPinnedBlinkProvider: txId=${pendingTransaction.transactionId}," +
                 " providerName=${pendingTransaction.providerName}",
         )
-        val providerType = pendingTransaction.providerName?.let {
-            networkProviderMapper.findProviderTypeByStorageKey(it, networkProviderMap.keys)
-        }
-        Logger.logTransaction("$LOG_TAG getProviderForTransaction: resolved providerType=$providerType")
-        return if (providerType != null && networkProviderMap[providerType] != null) {
-            val provider = networkProviderMap[providerType] as EthereumJsonRpcProvider
-            Logger.logTransaction("$LOG_TAG getProviderForTransaction: using specific provider for type=$providerType")
-            MultiNetworkProvider(
-                providers = listOf(provider),
-                blockchain = wallet.blockchain,
-            )
-        } else {
-            Logger.logTransaction("$LOG_TAG getProviderForTransaction: using multiJsonRpcProvider (fallback)")
-            multiJsonRpcProvider
-        }
+        if (!isBlinkTransaction(pendingTransaction)) return null
+
+        val blinkProvider = networkProviderMap[ProviderType.Blink] as? EthereumJsonRpcProvider ?: return null
+        return MultiNetworkProvider(providers = listOf(blinkProvider), blockchain = wallet.blockchain)
     }
 
     companion object {

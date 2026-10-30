@@ -304,8 +304,18 @@ internal class EtherscanTransactionHistoryProvider(
         }
     }
 
+    /**
+     * The Monad yield module is not verified in the explorer, so its calls carry a selector but no function name and,
+     * moving no coins, would be dropped as empty transfers. A transfer to a user may carry arbitrary input too, hence
+     * the zero value; other networks keep relying on the reported name alone.
+     */
+    private val PolygonTransaction.isMonadUnverifiedContractCall: Boolean
+        get() = blockchain == Blockchain.Monad &&
+            !methodId?.removePrefix("0x").isNullOrEmpty() &&
+            value.toBigDecimalOrNull()?.signum() == 0
+
     private val PolygonTransaction.isContractInteraction: Boolean
-        get() = !contractAddress.isNullOrEmpty() || !functionName.isNullOrEmpty()
+        get() = !contractAddress.isNullOrEmpty() || !functionName.isNullOrEmpty() || isMonadUnverifiedContractCall
 
     private fun PolygonTransactionHistoryResponse.extractApiError(): PolygonScanApiError? {
         return if (!this.isSuccessful) {

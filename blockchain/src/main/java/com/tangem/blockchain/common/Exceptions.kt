@@ -98,6 +98,15 @@ sealed class BlockchainSdkError(
 
         data object ScaledUiAmountMultiplierBalanceMismatch :
             Solana(13, "Scaled UI amount multiplier does not match the reported token balance")
+
+        data object InvalidBlockhashLength : Solana(14, "Solana blockhash must be 32 bytes")
+        data object UnsupportedMessageVersion : Solana(15, "Unsupported Solana message version")
+        data object DurableNonceTransaction :
+            Solana(16, "The blockhash slot of a durable nonce transaction holds the nonce and cannot be replaced")
+        data object TransactionAlreadySigned :
+            Solana(17, "Transaction already carries a signature, replacing the blockhash would invalidate it")
+        data object ProgramIdOutsideStaticKeys :
+            Solana(18, "Instruction program id is not among the static account keys")
     }
 
     sealed class Polkadot(
