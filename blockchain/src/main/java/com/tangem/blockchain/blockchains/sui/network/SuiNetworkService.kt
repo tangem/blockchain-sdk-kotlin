@@ -1,6 +1,7 @@
 package com.tangem.blockchain.blockchains.sui.network
 
 import com.tangem.blockchain.blockchains.sui.model.SuiDryRunResult
+import com.tangem.blockchain.blockchains.sui.model.SuiEpoch
 import com.tangem.blockchain.blockchains.sui.model.SuiExecuteResult
 import com.tangem.blockchain.blockchains.sui.model.SuiWalletInfo
 import com.tangem.blockchain.blockchains.sui.network.SuiConstants.COIN_TYPE
@@ -9,7 +10,6 @@ import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.extensions.Result
 import com.tangem.blockchain.extensions.successOr
 import com.tangem.blockchain.network.MultiNetworkProvider
-import java.math.BigDecimal
 
 internal class SuiNetworkService(
     providers: List<SuiGrpcProvider>,
@@ -25,16 +25,26 @@ internal class SuiNetworkService(
             .performRequest(SuiGrpcProvider::getCoins, address)
             .successOr { return it }
 
-        val totalSuiBalance = coins
+        val balances = multiProvider
+            .performRequest(SuiGrpcProvider::getBalances, address)
+            .successOr { return it }
+
+        val suiCoinsBalance = coins
             .filter { it.coinType == COIN_TYPE }
             .sumOf { it.mistBalance }
             .movePointLeft(Blockchain.Sui.decimals())
 
-        return Result.Success(SuiWalletInfo(suiTotalBalance = totalSuiBalance, coins = coins))
+        return Result.Success(
+            SuiWalletInfo(
+                suiCoinsBalance = suiCoinsBalance,
+                coins = coins,
+                mistAddressBalances = balances.associate { it.coinType to it.mistAddressBalance },
+            ),
+        )
     }
 
-    suspend fun getReferenceGasPrice(): Result<BigDecimal> {
-        return multiProvider.performRequest(SuiGrpcProvider::getReferenceGasPrice)
+    suspend fun getEpoch(): Result<SuiEpoch> {
+        return multiProvider.performRequest(SuiGrpcProvider::getEpoch)
     }
 
     suspend fun dryRunTransaction(transactionBytes: String): Result<SuiDryRunResult> {
