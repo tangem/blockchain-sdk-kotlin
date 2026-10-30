@@ -29,6 +29,7 @@ sealed class TransactionData {
         val amount: Amount? = null,
         override var status: TransactionStatus = TransactionStatus.Unconfirmed,
         override var hash: String? = null,
+        val extras: TransactionExtras? = null,
     ) : TransactionData() {
 
         sealed class Data {

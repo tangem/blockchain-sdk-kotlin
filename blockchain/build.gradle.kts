@@ -121,6 +121,7 @@ dependencies {
     implementation(libs.komputing.khex.extensions)
 
     implementation(libs.crypto.cbor)
+    implementation(libs.crypto.ens.normalize)
 
     implementation(files("libs/ripple-core-0.0.1.jar"))
     implementation(files("libs/solanaj-0.0.10.jar"))

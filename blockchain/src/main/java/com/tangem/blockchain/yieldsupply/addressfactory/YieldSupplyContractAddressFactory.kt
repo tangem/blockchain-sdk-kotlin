@@ -24,7 +24,7 @@ internal class YieldSupplyContractAddressFactory(
         Blockchain.EthereumTestnet,
         -> true
         // Monad's module is the Merkl incentives deployment, so it is released together with the incentives
-        Blockchain.Monad -> DepsContainer.blockchainFeatureToggles.isMonadYieldSupplyEnabled
+        Blockchain.Monad -> DepsContainer.blockchainFeatureToggles.isMonadEnabled
         else -> false
     }
 

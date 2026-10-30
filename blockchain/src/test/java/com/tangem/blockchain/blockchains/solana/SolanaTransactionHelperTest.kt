@@ -301,6 +301,141 @@ internal class SolanaTransactionHelperTest {
 
     // endregion
 
+    @Test
+    fun `replaceRecentBlockhash swaps only the blockhash`() {
+        val original = REAL_UNSIGNED_TRANSACTION.hexToBytes()
+        val start = REAL_BLOCKHASH_OFFSET
+        val end = REAL_BLOCKHASH_OFFSET + PUBLIC_KEY_LENGTH
+        Assert.assertEquals(REAL_BLOCKHASH_HEX, original.copyOfRange(start, end).toHexString().lowercase())
+
+        val patched = SolanaTransactionHelper.replaceRecentBlockhash(original, FRESH_BLOCKHASH).dataOrFail()
+
+        Assert.assertEquals(original.size, patched.size)
+        Assert.assertArrayEquals(FRESH_BLOCKHASH, patched.copyOfRange(start, end))
+        Assert.assertArrayEquals(original.copyOfRange(0, start), patched.copyOfRange(0, start))
+        Assert.assertArrayEquals(original.copyOfRange(end, original.size), patched.copyOfRange(end, patched.size))
+    }
+
+    @Test
+    fun `replaceRecentBlockhash keeps the transaction well-formed`() {
+        val original = REAL_UNSIGNED_TRANSACTION.hexToBytes()
+
+        val patched = SolanaTransactionHelper.replaceRecentBlockhash(original, FRESH_BLOCKHASH).dataOrFail()
+
+        val message = SolanaTransactionHelper.extractMessage(patched)
+        Assert.assertTrue(SolanaTransactionHelper.isTransactionMessage(message))
+        val signed = SolanaTransactionHelper.putSignature(
+            transaction = patched,
+            signerPublicKey = REAL_FEE_PAYER_KEY.hexToBytes(),
+            signature = ByteArray(64) { 0x02 },
+        )
+        Assert.assertTrue(signed is Result.Success)
+    }
+
+    @Test
+    fun `replaceRecentBlockhash handles a versioned message`() {
+        val original = withSignaturePlaceholder(v0Message())
+
+        val patched = SolanaTransactionHelper.replaceRecentBlockhash(original, FRESH_BLOCKHASH).dataOrFail()
+
+        Assert.assertEquals(original.size, patched.size)
+        val window = original.indexOfSubArray(SYNTHETIC_BLOCKHASH)
+        Assert.assertTrue(window >= 0)
+        Assert.assertArrayEquals(FRESH_BLOCKHASH, patched.copyOfRange(window, window + PUBLIC_KEY_LENGTH))
+        Assert.assertArrayEquals(original.copyOfRange(0, window), patched.copyOfRange(0, window))
+        Assert.assertArrayEquals(
+            original.copyOfRange(window + PUBLIC_KEY_LENGTH, original.size),
+            patched.copyOfRange(window + PUBLIC_KEY_LENGTH, patched.size),
+        )
+    }
+
+    @Test
+    fun `replaceRecentBlockhash rejects a transaction that already carries a signature`() {
+        val unsigned = REAL_UNSIGNED_TRANSACTION.hexToBytes()
+        val signed = SolanaTransactionHelper.putSignature(
+            transaction = unsigned,
+            signerPublicKey = REAL_FEE_PAYER_KEY.hexToBytes(),
+            signature = ByteArray(SIGNATURE_LENGTH) { 0x02 },
+        ).dataOrFail()
+
+        val result = SolanaTransactionHelper.replaceRecentBlockhash(signed, FRESH_BLOCKHASH)
+
+        Assert.assertEquals(
+            BlockchainSdkError.Solana.TransactionAlreadySigned,
+            (result as Result.Failure).error,
+        )
+    }
+
+    @Test
+    fun `replaceRecentBlockhash rejects a durable nonce transaction`() {
+        val transaction = withSignaturePlaceholder(durableNonceMessage())
+
+        val result = SolanaTransactionHelper.replaceRecentBlockhash(transaction, FRESH_BLOCKHASH)
+
+        Assert.assertEquals(
+            BlockchainSdkError.Solana.DurableNonceTransaction,
+            (result as Result.Failure).error,
+        )
+    }
+
+    @Test
+    fun `replaceRecentBlockhash rejects a program id outside the static keys`() {
+        val transaction = withSignaturePlaceholder(legacyMessage(programIdIndex = 9))
+
+        val result = SolanaTransactionHelper.replaceRecentBlockhash(transaction, FRESH_BLOCKHASH)
+
+        Assert.assertEquals(
+            BlockchainSdkError.Solana.ProgramIdOutsideStaticKeys,
+            (result as Result.Failure).error,
+        )
+    }
+
+    @Test
+    fun `replaceRecentBlockhash rejects a blockhash of the wrong length`() {
+        val original = REAL_UNSIGNED_TRANSACTION.hexToBytes()
+
+        listOf(0, 31, 33).forEach { length ->
+            val result = SolanaTransactionHelper.replaceRecentBlockhash(original, ByteArray(length) { 0x5A })
+
+            Assert.assertEquals(
+                "length $length",
+                BlockchainSdkError.Solana.InvalidBlockhashLength,
+                (result as Result.Failure).error,
+            )
+        }
+    }
+
+    private fun withSignaturePlaceholder(message: ByteArray): ByteArray = byteArrayOf(0x01) + ByteArray(64) + message
+
+    private fun v0Message(): ByteArray = byteArrayOf(0x80.toByte()) + // version prefix (v0)
+        byteArrayOf(0x01, 0x00, 0x01) + // header
+        byteArrayOf(0x02) + ByteArray(32) { 0x21 } + ByteArray(32) { 0x22 } + // 2 account keys
+        SYNTHETIC_BLOCKHASH +
+        byteArrayOf(0x01) + // instruction count
+        byteArrayOf(0x01) + // program id index
+        byteArrayOf(0x01, 0x00) + // 1 account index = [0]
+        byteArrayOf(0x03, 0x0A, 0x0B, 0x0C) + // data length 3 + data
+        byteArrayOf(0x00) // address table lookup count
+
+    private fun durableNonceMessage(): ByteArray = byteArrayOf(0x01, 0x00, 0x01) + // header
+        byteArrayOf(0x03) + ByteArray(32) { 0x21 } + ByteArray(32) { 0x22 } + ByteArray(32) + // keys, system program last
+        SYNTHETIC_BLOCKHASH +
+        byteArrayOf(0x01) + // instruction count
+        byteArrayOf(0x02) + // program id index → system program
+        byteArrayOf(0x03, 0x00, 0x01, 0x02) + // 3 account indexes
+        byteArrayOf(0x04, 0x04, 0x00, 0x00, 0x00) // data length 4 + AdvanceNonceAccount discriminator
+
+    private fun legacyMessage(programIdIndex: Int): ByteArray = byteArrayOf(0x01, 0x00, 0x01) + // header
+        byteArrayOf(0x02) + ByteArray(32) { 0x21 } + ByteArray(32) { 0x22 } + // 2 account keys
+        SYNTHETIC_BLOCKHASH +
+        byteArrayOf(0x01) + // instruction count
+        byteArrayOf(programIdIndex.toByte()) +
+        byteArrayOf(0x01, 0x00) + // 1 account index = [0]
+        byteArrayOf(0x03, 0x0A, 0x0B, 0x0C) // data length 3 + data
+
+    private fun ByteArray.indexOfSubArray(sub: ByteArray): Int =
+        (0..size - sub.size).firstOrNull { start -> copyOfRange(start, start + sub.size).contentEquals(sub) } ?: -1
+
     private fun Result<ByteArray>.dataOrFail(): ByteArray =
         (this as? Result.Success)?.data ?: error("Expected Result.Success but was $this")
 
@@ -325,5 +460,29 @@ internal class SolanaTransactionHelperTest {
                 byteArrayOf(0x02) + // program id index -> PROGRAM_KEY
                 byteArrayOf(0x02, 0x00, 0x01) + // 2 account indices -> [0, 1]
                 byteArrayOf(0x00) // data length 0
+
+        /** Byte offset of the blockhash in [REAL_UNSIGNED_TRANSACTION]: 1 + 64 signature slot + 3 header + 1 count + 9 * 32 keys. */
+        const val REAL_BLOCKHASH_OFFSET = 357
+        const val REAL_BLOCKHASH_HEX = "92ba528ef980924d516fa35a49d228a8d451d89a4a149a8988ad5e15325c09f6"
+        const val REAL_FEE_PAYER_KEY = "457e1b8faf3cc24988c7416acef1066088a46411ad5cedc30a70943e008f5f15"
+
+        val FRESH_BLOCKHASH = ByteArray(PUBLIC_KEY_LENGTH) { 0x5A }
+        val SYNTHETIC_BLOCKHASH = ByteArray(PUBLIC_KEY_LENGTH) { 0x11 }
+
+        /** A real StakeKit-built legacy transaction with a single signature placeholder. */
+        const val REAL_UNSIGNED_TRANSACTION = "010000000000000000000000000000000000000000000000000000000000000000000" +
+            "000000000000000000000000000000000000000000000000000000000000001000709457e1b8faf3cc24" +
+            "988c7416acef1066088a46411ad5cedc30a70943e008f5f15f5bb7e96e98ac7113d2dd578044070ede30bb" +
+            "61ed0ef4e0df49db168657880ba0000000000000000000000000000000000000000000000000000000000000" +
+            "000f2afc06308af48267bcade2d22a6332d9607252d1d88b9d4b9d91f7bce6ec4c506a1d8179137542a983437b" +
+            "dfe2a7ab2557f535c8a78722b68a49dc00000000006a1d817a502050b680791e6ce6db88e1e5b7150f61fc6790a" +
+            "4eb4d10000000006a7d51718c774c928566398691d5eb68b5eb8a39b4b6d5c73555b210000000006a7d517192c5c512" +
+            "18cc94c3d4af17f58daee089ba1fd44e3dbd98a0000000006a7d517193584d0feed9bb3431d13206be544281b57b8566" +
+            "cc5375ff400000092ba528ef980924d516fa35a49d228a8d451d89a4a149a8988ad5e15325c09f603020200017a03000" +
+            "000457e1b8faf3cc24988c7416acef1066088a46411ad5cedc30a70943e008f5f151e00000000000000643430376563313" +
+            "538636638333730363034303235383962393865316464c0c62d0000000000c80000000000000006a1d8179137542a983437b" +
+            "dfe2a7ab2557f535c8a78722b68a49dc000000000040201077400000000457e1b8faf3cc24988c7416acef1066088a46411ad" +
+            "5cedc30a70943e008f5f15457e1b8faf3cc24988c7416acef1066088a46411ad5cedc30a70943e008f5f1500000000000000000" +
+            "000000000000000000000000000000000000000000000000000000000000000000000000000000004060103060805000402000000"
     }
 }
