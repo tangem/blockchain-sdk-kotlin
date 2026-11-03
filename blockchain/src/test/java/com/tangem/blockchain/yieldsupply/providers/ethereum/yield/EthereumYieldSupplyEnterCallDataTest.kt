@@ -5,6 +5,7 @@ import com.tangem.blockchain.blockchains.ethereum.EthereumUtils
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
+import java.math.BigInteger
 
 /**
  * Test for [EthereumYieldSupplyEnterCallData]
@@ -13,9 +14,15 @@ internal class EthereumYieldSupplyEnterCallDataTest {
     private val blockchain = Blockchain.Ethereum
 
     private val signature = "0x79be55f7".hexToBytes()
+    private val signatureWithAmount = "0x3e44dfd2".hexToBytes()
     private val tokenContractAddress = "0x1234567890abcdef1234567890abcdef12345678"
 
     private val tokenAddressData = "0000000000000000000000001234567890abcdef1234567890abcdef12345678".hexToBytes()
+
+    private val amountTokenContractAddress = "0x1111111111111111111111111111111111111111"
+    private val amountAddressData = "0000000000000000000000001111111111111111111111111111111111111111".hexToBytes()
+    private val amount = BigInteger.valueOf(1_000_000)
+    private val amountData = "00000000000000000000000000000000000000000000000000000000000f4240".hexToBytes()
 
     @Test
     fun `Is call data is correct`() {
@@ -23,6 +30,16 @@ internal class EthereumYieldSupplyEnterCallDataTest {
             tokenContractAddress = tokenContractAddress,
         )
         val expected = signature + tokenAddressData
+        Truth.assertThat(callData.data).isEqualTo(expected)
+    }
+
+    @Test
+    fun `Is call data with amount is correct`() {
+        val callData = EthereumYieldSupplyEnterCallData(
+            tokenContractAddress = amountTokenContractAddress,
+            amount = amount,
+        )
+        val expected = signatureWithAmount + amountAddressData + amountData
         Truth.assertThat(callData.data).isEqualTo(expected)
     }
 
@@ -44,6 +61,40 @@ internal class EthereumYieldSupplyEnterCallDataTest {
         val actual = EthereumYieldSupplyEnterCallData.decode(rawCallData)
 
         Truth.assertThat(actual).isNull()
+    }
+
+    @Test
+    fun `WHEN correct data with amount THEN return RESULT with amount`() {
+        val rawCallData = "0x3e44dfd2" +
+            "0000000000000000000000001111111111111111111111111111111111111111" +
+            "00000000000000000000000000000000000000000000000000000000000f4240"
+
+        val actual = EthereumYieldSupplyEnterCallData.decode(rawCallData)
+
+        Truth.assertThat(actual).isNotNull()
+        Truth.assertThat(actual!!.tokenContractAddress).isEqualTo(amountTokenContractAddress)
+        Truth.assertThat(actual.amount).isEqualTo(amount)
+    }
+
+    @Test
+    fun `WHEN correct data without amount THEN return RESULT with null amount`() {
+        val rawCallData = "0x79be55f70000000000000000000000001234567890abcdef1234567890abcdef12345678"
+
+        val actual = EthereumYieldSupplyEnterCallData.decode(rawCallData)
+
+        Truth.assertThat(actual).isNotNull()
+        Truth.assertThat(actual!!.amount).isNull()
+    }
+
+    @Test
+    fun `WHEN data without amount has the amount selector inside the address THEN return RESULT with null amount`() {
+        val rawCallData = "0x79be55f70000000000000000000000003e44dfd290abcdef1234567890abcdef12345678"
+
+        val actual = EthereumYieldSupplyEnterCallData.decode(rawCallData)
+
+        Truth.assertThat(actual).isNotNull()
+        Truth.assertThat(actual!!.tokenContractAddress).isEqualTo("0x3e44dfd290abcdef1234567890abcdef12345678")
+        Truth.assertThat(actual.amount).isNull()
     }
 
     @Test
@@ -76,5 +127,26 @@ internal class EthereumYieldSupplyEnterCallDataTest {
             tokenContractAddress = EthereumUtils.ZERO_ADDRESS,
         )
         Truth.assertThat(invalidCallData2.validate(blockchain)).isFalse()
+    }
+
+    @Test
+    fun `Validate call data with amount`() {
+        val validCallData = EthereumYieldSupplyEnterCallData(
+            tokenContractAddress = amountTokenContractAddress,
+            amount = amount,
+        )
+        Truth.assertThat(validCallData.validate(blockchain)).isTrue()
+
+        val zeroAmountCallData = EthereumYieldSupplyEnterCallData(
+            tokenContractAddress = amountTokenContractAddress,
+            amount = BigInteger.ZERO,
+        )
+        Truth.assertThat(zeroAmountCallData.validate(blockchain)).isFalse()
+
+        val negativeAmountCallData = EthereumYieldSupplyEnterCallData(
+            tokenContractAddress = amountTokenContractAddress,
+            amount = BigInteger.valueOf(-1),
+        )
+        Truth.assertThat(negativeAmountCallData.validate(blockchain)).isFalse()
     }
 }
