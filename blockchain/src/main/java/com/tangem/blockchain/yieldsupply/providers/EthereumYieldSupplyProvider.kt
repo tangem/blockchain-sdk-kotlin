@@ -283,6 +283,17 @@ internal class EthereumYieldSupplyProvider(
         )
     }
 
+    override fun isAtLeastV2(versionStatus: YieldModuleVersionStatus): Boolean = when (versionStatus) {
+        YieldModuleVersionStatus.UpToDate -> true
+        is YieldModuleVersionStatus.UpgradeUnavailable ->
+            contractAddressFactory.getV2OrLaterImplementationAddresses()
+                .any { it.equals(versionStatus.currentImplementation, ignoreCase = true) }
+        is YieldModuleVersionStatus.UpgradeAvailable,
+        is YieldModuleVersionStatus.Indeterminate,
+        YieldModuleVersionStatus.NotDeployed,
+        -> false
+    }
+
     override suspend fun isSwapSpenderAllowed(spenderAddress: String): Boolean {
         if (!DepsContainer.blockchainFeatureToggles.isYieldModeSwapEnabled) return false
         return isRegistryAddressAllowed(EthereumYieldSupplyAllowedAddressCallData.allowedSpenders(spenderAddress))

@@ -293,6 +293,66 @@ internal class EthereumYieldSupplyProviderTest {
         )
     }
 
+    // --- isAtLeastV2 ---
+
+    @Test
+    fun `isAtLeastV2 returns true when the module is up to date`() {
+        assertThat(provider.isAtLeastV2(YieldModuleVersionStatus.UpToDate)).isTrue()
+    }
+
+    @Test
+    fun `isAtLeastV2 returns true for a V2 module the factory can't upgrade to the latest V3`() = runTest {
+        every {
+            contractAddressFactory.getYieldSupplyContractAddresses()
+        } returns addresses(latestImplementationAddress = LATEST_IMPL)
+        every {
+            contractAddressFactory.getV2OrLaterImplementationAddresses()
+        } returns setOf(OUTDATED_IMPL.uppercase().replace("0X", "0x"), LATEST_IMPL)
+        coEvery {
+            blockchainDataStorage.getOrNull(any())
+        } returns yieldSupplyModuleJson(yieldContractAddress = YIELD_MODULE, implementationAddress = null)
+        coEvery {
+            networkProvider.performRequest(EthereumJsonRpcProvider::getStorageAt, any<EthGetStorageAtData>())
+        } returns Result.Success(stringResponse(OUTDATED_IMPL_RAW))
+        // The factory still deploys the module's own implementation
+        coEvery {
+            networkProvider.performRequest(EthereumJsonRpcProvider::call, any<EthCallObject>())
+        } returns Result.Success(stringResponse(OUTDATED_IMPL_RAW))
+
+        assertThat(provider.isAtLeastV2(provider.checkModuleVersionStatus())).isTrue()
+    }
+
+    @Test
+    fun `isAtLeastV2 returns false for a pre-V2 module the factory can't upgrade`() {
+        every { contractAddressFactory.getV2OrLaterImplementationAddresses() } returns setOf(LATEST_IMPL)
+
+        val status = YieldModuleVersionStatus.UpgradeUnavailable(currentImplementation = OUTDATED_IMPL)
+
+        assertThat(provider.isAtLeastV2(status)).isFalse()
+    }
+
+    @Test
+    fun `isAtLeastV2 returns false when the module needs an upgrade first`() {
+        every { contractAddressFactory.getV2OrLaterImplementationAddresses() } returns setOf(OUTDATED_IMPL, LATEST_IMPL)
+
+        val status = YieldModuleVersionStatus.UpgradeAvailable(
+            currentImplementation = OUTDATED_IMPL,
+            latestImplementation = LATEST_IMPL,
+        )
+
+        assertThat(provider.isAtLeastV2(status)).isFalse()
+    }
+
+    @Test
+    fun `isAtLeastV2 returns false when the module version can't be read`() {
+        assertThat(provider.isAtLeastV2(YieldModuleVersionStatus.Indeterminate(reason = "rpc down"))).isFalse()
+    }
+
+    @Test
+    fun `isAtLeastV2 returns false when the module is not deployed`() {
+        assertThat(provider.isAtLeastV2(YieldModuleVersionStatus.NotDeployed)).isFalse()
+    }
+
     // --- getYieldModuleAddress cache invalidation (factory binding) ---
 
     @Test

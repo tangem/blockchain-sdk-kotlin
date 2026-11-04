@@ -76,6 +76,20 @@ internal class AaveV3YieldSupplyContractAddressFactory(
         else -> null
     }
 
+    /** V2 introduced `enterProtocolByOwner(token, amount)` and `withdraw(token, amount)`, and V3 kept both. */
+    fun getV2OrLaterImplementationAddresses(): Set<String> = when (blockchain) {
+        Blockchain.Ethereum,
+        Blockchain.Avalanche,
+        Blockchain.Arbitrum,
+        Blockchain.Optimism,
+        Blockchain.Base,
+        Blockchain.BSC,
+        Blockchain.Polygon,
+        -> setOf(getV2ImplementationAddress(), V3_IMPLEMENTATION_ADDRESS)
+        Blockchain.Monad -> setOf(V3_IMPLEMENTATION_ADDRESS)
+        else -> emptySet()
+    }
+
     private fun getV2ImplementationAddress(): String = when (blockchain) {
         Blockchain.Ethereum -> "0xa6a6afa45D22aE7a55abC5cbBF426Fc8Dd45b846"
         Blockchain.Avalanche -> "0xe1d0BF13C427C4B2e25Df0CA29E1Faa2d10458f3"

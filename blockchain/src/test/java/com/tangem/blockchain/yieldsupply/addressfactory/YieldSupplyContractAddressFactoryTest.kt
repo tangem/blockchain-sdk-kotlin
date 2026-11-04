@@ -125,6 +125,49 @@ internal class YieldSupplyContractAddressFactoryTest {
         }
     }
 
+    @Test
+    fun `mainnets count both V2 and V3 as V2 or later whatever the V3 toggle`() {
+        val toggleOffAddresses = V3_GATED_BLOCKCHAINS.associateWith { blockchain ->
+            val factory = YieldSupplyContractAddressFactory(blockchain)
+            factory.getV2OrLaterImplementationAddresses() to
+                factory.getYieldSupplyContractAddresses().latestImplementationAddress
+        }
+
+        initToggles(isMonadEnabled = true, isYieldModuleV3Enabled = true)
+
+        V3_GATED_BLOCKCHAINS.forEach { blockchain ->
+            val (v2Addresses, v2Implementation) = toggleOffAddresses.getValue(blockchain)
+            val v3Addresses = YieldSupplyContractAddressFactory(blockchain).getV2OrLaterImplementationAddresses()
+
+            assertThat(v3Addresses).isEqualTo(v2Addresses)
+            assertThat(v3Addresses).containsExactly(v2Implementation, V3_IMPLEMENTATION_ADDRESS)
+        }
+    }
+
+    @Test
+    fun `Polygon counts its V2 implementation as V2 or later`() {
+        val addresses = YieldSupplyContractAddressFactory(
+            Blockchain.Polygon,
+        ).getV2OrLaterImplementationAddresses()
+
+        assertThat(addresses).contains("0x66084220E3dFdd1D8C8F1F868C103F9418DEce7c")
+    }
+
+    @Test
+    fun `Monad counts only V3 as V2 or later`() {
+        val addresses = YieldSupplyContractAddressFactory(Blockchain.Monad).getV2OrLaterImplementationAddresses()
+
+        assertThat(addresses).containsExactly(V3_IMPLEMENTATION_ADDRESS)
+    }
+
+    @Test
+    fun `testnet has no V2 or later implementation`() {
+        val addresses =
+            YieldSupplyContractAddressFactory(Blockchain.EthereumTestnet).getV2OrLaterImplementationAddresses()
+
+        assertThat(addresses).isEmpty()
+    }
+
     private fun initToggles(isMonadEnabled: Boolean, isYieldModuleV3Enabled: Boolean = false) {
         DepsContainer.onInit(
             config = mockk<BlockchainSdkConfig>(relaxed = true),
