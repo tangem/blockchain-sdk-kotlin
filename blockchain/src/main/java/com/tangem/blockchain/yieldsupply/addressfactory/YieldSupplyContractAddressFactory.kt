@@ -28,6 +28,9 @@ internal class YieldSupplyContractAddressFactory(
         else -> false
     }
 
+    fun getV2OrLaterImplementationAddresses(): Set<String> =
+        aaveV3YieldSupplyContractAddressFactory.getV2OrLaterImplementationAddresses()
+
     fun getYieldSupplyContractAddresses(): YieldSupplyContractAddresses {
         return YieldSupplyContractAddresses(
             factoryContractAddress = aaveV3YieldSupplyContractAddressFactory.getFactoryAddress(),

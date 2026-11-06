@@ -50,6 +50,15 @@ internal interface EtherScanApi {
         @Query("sort") sort: String = "desc",
     ): EtherscanInternalTransactionsResponse
 
+    @GET("api")
+    suspend fun getTransactionByHash(
+        @Query("chainid") chainId: Int,
+        @Query("txhash") txHash: String,
+        @Query("apikey") apiKey: String,
+        @Query("action") action: String = "eth_getTransactionByHash",
+        @Query("module") module: String = "proxy",
+    ): EtherscanProxyTransactionResponse
+
     companion object {
         const val DEFAULT_END_BLOCK: Long = Int.MAX_VALUE.toLong()
     }

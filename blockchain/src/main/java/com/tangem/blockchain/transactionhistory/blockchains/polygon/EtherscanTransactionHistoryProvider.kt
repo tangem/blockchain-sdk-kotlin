@@ -40,6 +40,12 @@ internal class EtherscanTransactionHistoryProvider(
         apiKey = etherscanApiKey,
     )
 
+    private val yieldModuleUpgradeInputLoader = EtherscanYieldModuleUpgradeInputLoader(
+        blockchain = blockchain,
+        api = api,
+        apiKey = etherscanApiKey,
+    )
+
     @Suppress("TooGenericExceptionThrown")
     override suspend fun getTransactionHistoryState(
         address: String,
@@ -74,7 +80,7 @@ internal class EtherscanTransactionHistoryProvider(
                 }
             }
 
-            val historyItems = response.result.toTransactionHistoryItems(
+            val historyItems = response.result.transactions.orEmpty().toTransactionHistoryItems(
                 walletAddress = formattedAddress,
                 filterType = filterType,
             )
@@ -149,7 +155,8 @@ internal class EtherscanTransactionHistoryProvider(
                 }
             }
 
-            val txs = response.result
+            val txs = response.result.transactions.orEmpty()
+                .let { yieldModuleUpgradeInputLoader.withInputs(it) }
                 .toTransactionHistoryItems(walletAddress = formattedAddress, filterType = request.filterType)
                 .filterNot { item -> shouldExcludeFromHistory(filterType = request.filterType, item = item) }
 
@@ -173,10 +180,10 @@ internal class EtherscanTransactionHistoryProvider(
         return address
     }
 
-    private fun PolygonScanResult.toTransactionHistoryItems(
+    private fun List<PolygonTransaction>.toTransactionHistoryItems(
         walletAddress: String,
         filterType: TransactionHistoryRequest.FilterType,
-    ): List<TransactionHistoryItem> = transactions.orEmpty().mapNotNull { transaction ->
+    ): List<TransactionHistoryItem> = mapNotNull { transaction ->
         transaction.toTransactionHistoryItem(walletAddress = walletAddress, filterType = filterType)
     }
 

@@ -3,8 +3,14 @@ package com.tangem.blockchain.blockchains.solana
 import android.os.SystemClock
 import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionParser
 import com.tangem.blockchain.blockchains.solana.alt.SolanaTransactionSizeReducer
+import com.tangem.blockchain.blockchains.solana.nft.MultiNetworkSolanaNFTNetworkService
+import com.tangem.blockchain.blockchains.solana.nft.SolanaNFTErrorMapper
+import com.tangem.blockchain.blockchains.solana.nft.SolanaNFTTransferBuilder
+import com.tangem.blockchain.blockchains.solana.nft.SolanaNFTTransferExtras
+import com.tangem.blockchain.blockchains.solana.nft.SolanaNFTTransferRoute
 import com.tangem.blockchain.collectibles.CollectiblesVaultProvider
 import com.tangem.blockchain.collectibles.DefaultCollectiblesVaultProvider
+import com.tangem.blockchain.blockchains.solana.solanaj.core.SolanaTransaction
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaMainAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.SolanaSplAccountInfo
 import com.tangem.blockchain.blockchains.solana.solanaj.model.TransactionInfo
@@ -66,6 +72,8 @@ class SolanaWalletManager internal constructor(
         MultiNetworkProvider(networkServices, wallet.blockchain)
     private val tokenAccountInfoFinder = SolanaTokenAccountInfoFinder(multiNetworkProvider)
     private val transactionBuilder = SolanaTransactionBuilder(account, multiNetworkProvider)
+    private val nftNetworkService = MultiNetworkSolanaNFTNetworkService(multiNetworkProvider)
+    private val nftTransferBuilder = SolanaNFTTransferBuilder(account = account, networkService = nftNetworkService)
     private val solanaTransactionSizeReducer = SolanaTransactionSizeReducer(
         walletPubkey = wallet.publicKey,
         rawTransactionParser = SolanaTransactionParser(),
@@ -138,6 +146,14 @@ class SolanaWalletManager internal constructor(
 
     override suspend fun validate(transactionData: TransactionData): kotlin.Result<Unit> {
         val uncompiledTransaction = transactionData.requireUncompiled()
+        if (uncompiledTransaction.isNFTTransfer()) {
+            when (val route = routeNFT(uncompiledTransaction)) {
+                is Result.Failure -> return kotlin.Result.failure(route.error)
+                is Result.Success -> if (route.data is SolanaNFTTransferRoute.Program) {
+                    return kotlin.Result.success(Unit)
+                }
+            }
+        }
 
         val amount = uncompiledTransaction.amount
         val destination = uncompiledTransaction.destinationAddress
@@ -205,6 +221,17 @@ class SolanaWalletManager internal constructor(
                 sendTransaction(signedTransaction, transactionToSend, startSendingTimestamp)
             }
             is TransactionData.Uncompiled -> {
+                if (transactionData.isNFTTransfer()) {
+                    val route = routeNFT(transactionData).successOr { return it }
+                    if (route is SolanaNFTTransferRoute.Program) {
+                        return sendNFT(
+                            transactionData = transactionData,
+                            route = route,
+                            signer = signer,
+                            onSigned = onSigned,
+                        )
+                    }
+                }
                 val ownerAccountInfo = getOwnerAccountInfo(transactionData.amount)?.successOr {
                     return it
                 }
@@ -490,6 +517,11 @@ class SolanaWalletManager internal constructor(
     }
 
     override suspend fun getFee(transactionData: TransactionData): Result<TransactionFee> {
+        if (transactionData is TransactionData.Uncompiled && transactionData.isNFTTransfer()) {
+            val route = routeNFT(transactionData).successOr { return it }
+            if (route is SolanaNFTTransferRoute.Program) return getNFTFee(route)
+        }
+
         val transactionWithSignaturePlaceholder =
             ((transactionData as? TransactionData.Compiled)?.value as? TransactionData.Compiled.Data.Bytes)?.data
 
@@ -705,6 +737,58 @@ class SolanaWalletManager internal constructor(
         Cluster.TESTNET.endpoint -> RENT_PER_EPOCH_IN_LAMPORTS
         Cluster.DEVNET.endpoint -> RENT_PER_EPOCH_IN_LAMPORTS_DEV_NET
         else -> RENT_PER_EPOCH_IN_LAMPORTS
+    }
+
+    private fun TransactionData.isNFTTransfer(): Boolean = this is TransactionData.Uncompiled &&
+        extras is SolanaNFTTransferExtras
+
+    private suspend fun routeNFT(transactionData: TransactionData.Uncompiled): Result<SolanaNFTTransferRoute> {
+        val assetAddress = (transactionData.amount.type as? AmountType.Token)?.token?.contractAddress
+            ?: return Result.Failure(BlockchainSdkError.Solana.NFTUnsupportedAsset)
+        return nftTransferBuilder.route(assetAddress, transactionData.destinationAddress)
+    }
+
+    private suspend fun buildNFTTransaction(route: SolanaNFTTransferRoute.Program): Result<SolanaTransaction> =
+        transactionBuilder.buildUnsignedTransaction(
+            instructions = route.instructions,
+            computeUnitLimit = route.computeUnitLimit,
+            computeUnitPrice = SolanaTransactionBuilder.DEFAULT_CU_PRICE,
+        )
+
+    private suspend fun sendNFT(
+        transactionData: TransactionData.Uncompiled,
+        route: SolanaNFTTransferRoute.Program,
+        signer: TransactionSigner,
+        onSigned: () -> Unit,
+    ): Result<TransactionSendResult> {
+        val transaction = buildNFTTransaction(route).successOr { return it }
+
+        val startSendingTimestamp = SystemClock.elapsedRealtime()
+        val signResult = signer.sign(transaction.getSerializedMessage(), wallet.publicKey)
+            .successOr { return Result.fromTangemSdkError(it.error) }
+        onSigned()
+        transaction.addSignedDataSignature(signResult)
+
+        return when (val result = sendTransaction(transaction.serialize(), transactionData, startSendingTimestamp)) {
+            is Result.Success -> result
+            is Result.Failure -> if (route.isCore) {
+                Result.Failure(SolanaNFTErrorMapper.mapCoreError(result.error))
+            } else {
+                result
+            }
+        }
+    }
+
+    private suspend fun getNFTFee(route: SolanaNFTTransferRoute.Program): Result<TransactionFee> {
+        val transaction = buildNFTTransaction(route).successOr { return it }
+        val networkFeeLamports = multiNetworkProvider.performRequest { getFeeForMessage(transaction) }
+            .successOr { return it }
+            .value
+        val rentLamports = route.createdAccountSpaces.sumOf { space ->
+            nftNetworkService.rentExemption(space).successOr { return it }
+        }
+        val fee = SolanaValueConverter.toSol(networkFeeLamports + rentLamports)
+        return Result.Success(TransactionFee.Single(Fee.Common(Amount(fee, wallet.blockchain))))
     }
 
     private fun <T> List<T>.dropFirstIfNeeded(condition: Boolean) = if (condition) drop(1) else this

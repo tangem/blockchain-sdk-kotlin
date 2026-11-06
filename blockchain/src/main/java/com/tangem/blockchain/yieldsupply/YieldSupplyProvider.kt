@@ -84,6 +84,16 @@ interface YieldSupplyProvider {
     suspend fun checkModuleVersionStatus(): YieldModuleVersionStatus
 
     /**
+     *  Checks if the user's deployed Yield Module, in the given [versionStatus], already has the calls V2 introduced:
+     *  `enterProtocolByOwner(token, amount)` and `withdraw(token, amount)`. An outdated module the factory can't
+     *  upgrade still has them when it is on V2 or later, so they can be sent to it without an upgrade.
+     *
+     *  @param versionStatus The status [checkModuleVersionStatus] returned.
+     *  @return False when the module is not deployed, its version is unknown, or it needs an upgrade first.
+     */
+    fun isAtLeastV2(versionStatus: YieldModuleVersionStatus): Boolean
+
+    /**
      *  Checks if the given spender address is allowed in the SwapExecutionRegistry.
      *
      *  @param spenderAddress The address to check.

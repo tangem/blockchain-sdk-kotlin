@@ -32,6 +32,8 @@ internal object DefaultYieldSupplyProvider : YieldSupplyProvider {
 
     override suspend fun checkModuleVersionStatus(): YieldModuleVersionStatus = YieldModuleVersionStatus.NotDeployed
 
+    override fun isAtLeastV2(versionStatus: YieldModuleVersionStatus): Boolean = false
+
     override suspend fun isSwapSpenderAllowed(spenderAddress: String): Boolean = false
 
     override suspend fun isSwapTargetAllowed(targetAddress: String): Boolean = false
